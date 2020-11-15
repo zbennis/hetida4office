@@ -129,6 +129,15 @@ typedef enum
     NRF_UARTE_BAUDRATE_1000000 = UARTE_BAUDRATE_BAUDRATE_Baud1M      ///< 1000000 baud.
 } nrf_uarte_baudrate_t;
 
+#if defined(UARTE_CONFIG_STOP_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Types of UARTE stop bit modes. */
+typedef enum
+{
+    NRF_UARTE_STOP_ONE = UARTE_CONFIG_STOP_One << UARTE_CONFIG_STOP_Pos, ///< One stop bit.
+    NRF_UARTE_STOP_TWO = UARTE_CONFIG_STOP_Two << UARTE_CONFIG_STOP_Pos  ///< Two stop bits.
+} nrf_uarte_stop_t;
+#endif
+
 /** @brief Types of UARTE error masks. */
 typedef enum
 {
@@ -394,7 +403,8 @@ __STATIC_INLINE uint32_t nrf_uarte_task_address_get(NRF_UARTE_Type * p_reg, nrf_
  */
 __STATIC_INLINE void nrf_uarte_configure(NRF_UARTE_Type   * p_reg,
                                          nrf_uarte_parity_t parity,
-                                         nrf_uarte_hwfc_t   hwfc);
+                                         nrf_uarte_hwfc_t   hwfc,
+                                         nrf_uarte_stop_t   stop);
 
 /**
  * @brief Function for setting UARTE baud rate.
@@ -591,9 +601,14 @@ __STATIC_INLINE uint32_t nrf_uarte_task_address_get(NRF_UARTE_Type * p_reg, nrf_
 
 __STATIC_INLINE void nrf_uarte_configure(NRF_UARTE_Type   * p_reg,
                                          nrf_uarte_parity_t parity,
-                                         nrf_uarte_hwfc_t   hwfc)
+                                         nrf_uarte_hwfc_t   hwfc,
+                                         nrf_uarte_stop_t   stop)
 {
-    p_reg->CONFIG = (uint32_t)parity | (uint32_t)hwfc;
+    p_reg->CONFIG = (uint32_t)parity
+#if defined(UARTE_CONFIG_STOP_Msk)
+                    | (uint32_t)stop
+#endif
+                    | (uint32_t)hwfc;
 }
 
 __STATIC_INLINE void nrf_uarte_baudrate_set(NRF_UARTE_Type   * p_reg, nrf_uarte_baudrate_t baudrate)

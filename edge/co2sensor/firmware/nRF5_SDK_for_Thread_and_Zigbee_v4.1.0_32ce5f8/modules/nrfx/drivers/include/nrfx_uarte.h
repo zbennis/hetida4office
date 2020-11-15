@@ -106,6 +106,7 @@ typedef struct
     nrf_uarte_hwfc_t     hwfc;               ///< Flow control configuration.
     nrf_uarte_parity_t   parity;             ///< Parity configuration.
     nrf_uarte_baudrate_t baudrate;           ///< Baud rate.
+    nrf_uarte_stop_t     stop;               ///< Stop bits.
     uint8_t              interrupt_priority; ///< Interrupt priority.
 } nrfx_uarte_config_t;
 
@@ -120,6 +121,7 @@ typedef struct
     .hwfc               = (nrf_uarte_hwfc_t)NRFX_UARTE_DEFAULT_CONFIG_HWFC,         \
     .parity             = (nrf_uarte_parity_t)NRFX_UARTE_DEFAULT_CONFIG_PARITY,     \
     .baudrate           = (nrf_uarte_baudrate_t)NRFX_UARTE_DEFAULT_CONFIG_BAUDRATE, \
+    .stop               = (nrf_uarte_stop_t)NRF_UARTE_STOP_ONE,                     \
     .interrupt_priority = NRFX_UARTE_DEFAULT_CONFIG_IRQ_PRIORITY,                   \
 }
 
