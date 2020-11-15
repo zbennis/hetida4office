@@ -54,4 +54,11 @@
 #define PIN_LP8_RXD PIN_UART_TX // UART
 #define PIN_LP8_TXD PIN_UART_RX // UART
 
+// I2C
+#define PIN_I2C_SDA PIN_SDA
+#define PIN_I2C_SCL PIN_SCL
+
+// MQTTSN
+#define PIN_MQTTSN_CONNECTION_STATUS PIN_LED1
+
 #define NUM_DIGITAL_IN 1 // required to configure resources for GPIOTE event listeners

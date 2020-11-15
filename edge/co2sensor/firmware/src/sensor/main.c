@@ -1,18 +1,20 @@
 #include "bme280/fg_bme280_actor.h"
 #include "lp8/fg_lp8_actor.h"
 #include "rtc/fg_rtc_actor.h"
+#include "mqttsn/fg_mqttsn_actor.h"
 #include <nrf_assert.h>
 #include <nrf_log.h>
 #include <nrf_log_ctrl.h>
 #include <nrf_log_default_backends.h>
 #include <nrf_pwr_mgmt.h>
 #include <stdlib.h>
+#include <thread_utils.h>
   
 // Time between measurements
 #define MAIN_IDLE_TIME                                                                             \
     (FG_RTC_TICKS_PER_SECOND * 16) // min 16s (min time between LP8 measurements), currently 16s
 
-FG_ACTOR_RESULT_HANDLERS_DEC(start_timer_result_handler, init_or_wakeup_result_handler,
+FG_ACTOR_RESULT_HANDLERS_DEC(timer_and_gateway_result_handler, init_or_wakeup_result_handler,
     pressure_measurement_result_handler, co2_measurement_result_handler);
 
 /** BME280 child actor resources */
@@ -23,6 +25,9 @@ static const fg_actor_t * m_p_lp8_actor;
 
 /** RTC child actor resources */
 static const fg_actor_t * m_p_rtc_actor;
+
+/** MQTTSN child actor resources */
+static const fg_actor_t * m_p_mqttsn_actor;
 
 /** Main loop */
 
@@ -56,24 +61,31 @@ int main(void)
     m_p_bme280_actor = fg_bme280_actor_init();
     m_p_lp8_actor = fg_lp8_actor_init();
     m_p_rtc_actor = fg_rtc_actor_init();
+    m_p_mqttsn_actor = fg_mqttsn_actor_init();
 
     // TODO: Implement RTC Actor in a way that it can handle multiple
     // concurrent ENABLE messages, then start the timer in parallel with
     // the BME reset.
     fg_actor_transaction_t * const p_init_transaction =
-        fg_actor_allocate_root_transaction(start_timer_result_handler);
+        fg_actor_allocate_root_transaction(timer_and_gateway_result_handler);
     fg_rtc_actor_allocate_message(FG_RTC_ENABLE, p_init_transaction);
+    fg_mqttsn_actor_allocate_message(FG_MQTTSN_SEARCH_GATEWAY, p_init_transaction);
 
     while (true)
     {
         fg_actor_run();
-        NRF_LOG_FLUSH();
-        nrf_pwr_mgmt_run();
+        thread_process();
+
+        if (NRF_LOG_PROCESS() == false)
+        {
+            thread_sleep();
+            // nrf_pwr_mgmt_run();
+        }
     }
 }
 
 /** Implementation */
-FG_ACTOR_RESULT_HANDLER(start_timer_result_handler)
+FG_ACTOR_RESULT_HANDLER(timer_and_gateway_result_handler)
 {
     const fg_actor_action_t * const p_completed_action = FG_ACTOR_GET_FIRST_COMPLETED_ACTION();
     ASSERT(p_completed_action->p_actor == m_p_rtc_actor)

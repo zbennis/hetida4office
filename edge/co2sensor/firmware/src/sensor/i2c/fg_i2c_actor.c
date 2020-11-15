@@ -31,9 +31,6 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
 /** I2C resources */
 #define I2C_INSTANCE_ID 0
 
-#define PIN_I2C_SDA PIN_SDA
-#define PIN_I2C_SCL PIN_SCL
-
 static nrfx_twim_t m_nrfx_i2c = NRFX_TWIM_INSTANCE(I2C_INSTANCE_ID);
 static void i2c_irq_handler(nrfx_twim_evt_t const * p_event, void * p_context);
 
