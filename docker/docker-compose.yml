@@ -1,0 +1,59 @@
+version: "3"
+services:
+    timescale:
+        image: timescale/timescaledb:latest-pg12
+        volumes:
+            - timescale_data:/var/lib/postgresql/data
+            - ./timescale/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: h4o
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: admin
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+    hivemq-ce:
+        image: hivemq/hivemq-ce
+        ports:
+            - "1883:1883"
+    zookeeper:
+        image: wurstmeister/zookeeper
+        hostname: zookeeper
+        ports:
+            - "2181:2181"
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+        environment:
+            ZOO_MY_ID: 1
+        volumes:
+            - ./data/zookeeper/data:/data
+            - ./data/zookeeper/datalog:/datalog
+        restart: unless-stopped
+    kafka:
+        image: wurstmeister/kafka
+        ports:
+            - "9092:9092"
+        volumes:
+            - ./data/kafka/kafka-logs:/kafka.logs
+            - ./kafka/create-topic.sh:/docker-entrypoint-initdb.d/create-topic.sh
+        environment:
+            KAFKA_ADVERTISED_HOST_NAME: localhost
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+        depends_on:
+            - zookeeper
+        restart: unless-stopped
+volumes:
+    timescale_data:
+        driver: local
