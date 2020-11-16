@@ -244,6 +244,8 @@ struct fg_actor
 
 #define FG_ACTOR_GET_SINGLETON_TASK() fg_actor_get_running_task(FG_ACTOR_DEFAULT_TASK_INSTANCE)
 
+#define FG_ACTOR_IS_SINGLETON_TASK_RUNNING() fg_actor_is_task_running(FG_ACTOR_DEFAULT_TASK_INSTANCE)
+
 #define FG_ACTOR_GET_FIRST_COMPLETED_ACTION() (p_completed_transaction->p_first_concurrent_action)
 
 #define FG_ACTOR_SET_P_X_(_x, _p_action, _type, _p_var)                                            \

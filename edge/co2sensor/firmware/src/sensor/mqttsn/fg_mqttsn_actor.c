@@ -246,7 +246,10 @@ static void fg_mqttsn_evt_handler(mqttsn_client_t * p_client, mqttsn_event_t * p
 
         case MQTTSN_EVENT_DISCONNECTED:
             NRFX_LOG_INFO("MQTT-SN event: Client disconnected.");
-            FG_ACTOR_SINGLETON_TASK_FINISHED();
+            if (FG_ACTOR_IS_SINGLETON_TASK_RUNNING())
+            {
+                FG_ACTOR_SINGLETON_TASK_FINISHED();
+            }
             break;
 
         case MQTTSN_EVENT_REGISTERED:
@@ -287,10 +290,14 @@ static void fg_mqttsn_evt_handler(mqttsn_client_t * p_client, mqttsn_event_t * p
             break;
 
         case MQTTSN_EVENT_TIMEOUT:
-            NRFX_LOG_INFO("MQTT-SN event: Timed-out message: %d. Message ID: %d.",
+            NRFX_LOG_ERROR("MQTT-SN event: Dropped message: %d. Message ID: %d due to timeout.",
                 p_event->event_data.error.msg_type, p_event->event_data.error.msg_id);
-            p_running_task = FG_ACTOR_GET_SINGLETON_TASK();
-            FG_ACTOR_ERROR(p_running_task, NRFX_ERROR_TIMEOUT);
+            if (FG_ACTOR_IS_SINGLETON_TASK_RUNNING())
+            {
+                p_running_task = FG_ACTOR_GET_SINGLETON_TASK();
+                FG_ACTOR_ERROR(p_running_task, NRFX_ERROR_TIMEOUT);
+                FG_ACTOR_SINGLETON_TASK_FINISHED();
+            }
             break;
 
         case MQTTSN_EVENT_GATEWAY_FOUND:
@@ -302,10 +309,10 @@ static void fg_mqttsn_evt_handler(mqttsn_client_t * p_client, mqttsn_event_t * p
             break;
 
         case MQTTSN_EVENT_SEARCHGW_TIMEOUT:
-            NRFX_LOG_INFO(
+            NRFX_LOG_ERROR(
                 "MQTT-SN event: Gateway discovery result: 0x%x.", p_event->event_data.discovery);
             if (p_event->event_data.discovery != MQTTSN_SEARCH_GATEWAY_FINISHED &&
-                m_fg_actor_state == MQTTSN_CONNECTING)
+                FG_ACTOR_IS_SINGLETON_TASK_RUNNING())
             {
                 p_running_task = FG_ACTOR_GET_SINGLETON_TASK();
                 FG_ACTOR_ERROR(p_running_task, NRFX_ERROR_TIMEOUT);
