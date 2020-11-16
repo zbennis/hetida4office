@@ -43,7 +43,6 @@ FG_ACTOR_RESULT_HANDLERS_DEC(fg_lp8_hard_reset, fg_lp8_hard_reset_done);
 FG_ACTOR_INTERFACE_LOCAL_DEC();
 
 static bool m_uart_enabled;
-static bool m_rtc_enabled;
 
 
 /** LP8 resources */
@@ -249,9 +248,7 @@ static const fg_gpio_pin_config_t m_lp8_rdy_pin_config = {
 
 
 /** RTC child actor resources */
-#define LP8_RTC_VCAP_SATURATION_DELAY_TICKS FG_RTC_ACTOR_MS_TO_TICKS(LP8_VCAP_SATURATION_TIME)
-
-static const uint32_t m_saturation_delay_ticks = LP8_RTC_VCAP_SATURATION_DELAY_TICKS;
+static const uint32_t m_saturation_delay_ms = LP8_VCAP_SATURATION_TIME;
 
 
 /** Public API */
@@ -295,9 +292,6 @@ FG_ACTOR_SLOT(fg_lp8_measure_charge)
     nrf_gpio_pin_set(PIN_LP8_EN_CHARGE);
     FG_ACTOR_POST_MESSAGE(lpcomp, FG_LPCOMP_START);
 
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_ENABLE);
-    m_rtc_enabled = true;
-
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_lp8_measure_saturate);
 }
 
@@ -308,7 +302,7 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_measure_saturate)
     FG_ACTOR_STATE_TRANSITION(LP8_MEASURING, LP8_MEASURING, "saturating");
 
     fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_START_TIMER);
-    FG_ACTOR_SET_ARGS(p_next_action, m_saturation_delay_ticks);
+    FG_ACTOR_SET_ARGS(p_next_action, m_saturation_delay_ms);
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_lp8_measure_switch_on);
 }
@@ -318,9 +312,6 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_measure_switch_on)
     RESET_ON_ERROR(fg_lp8_hard_reset, "measuring (saturating): %#x!");
 
     FG_ACTOR_STATE_TRANSITION(LP8_MEASURING, LP8_MEASURING, "switching on");
-
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_DISABLE);
-    m_rtc_enabled = false;
 
     nrf_gpio_pin_clear(PIN_LP8_EN_CHARGE);
     nrf_gpio_pin_set(PIN_LP8_EN_MEAS);
@@ -515,11 +506,6 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_hard_reset)
     fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(gpio, FG_GPIO_STOP);
     FG_ACTOR_SET_ARGS(p_next_action, m_lp8_rdy_pin_config);
 
-    if (m_rtc_enabled)
-    {
-        FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_DISABLE);
-        m_rtc_enabled = false;
-    }
     if (m_uart_enabled)
     {
         FG_ACTOR_POST_MESSAGE(uart, FG_UART_DISABLE);

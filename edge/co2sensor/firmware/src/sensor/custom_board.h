@@ -47,14 +47,12 @@ extern "C" {
 #include "nrf_gpio.h"
 
 // LEDs definitions for Adafruit ItsyBitsy nRF52840 Express
-#define LEDS_NUMBER    4
+#define LEDS_NUMBER    2
 
 #define LED_1          NRF_GPIO_PIN_MAP(0,6)
 #define LED_2          NRF_GPIO_PIN_MAP(0,4)
-#define LED_3          NRF_GPIO_PIN_MAP(0,30)
-#define LED_4          NRF_GPIO_PIN_MAP(0,28)
 #define LED_START      LED_1
-#define LED_STOP       LED_4
+#define LED_STOP       LED_2
 
 #define LEDS_ACTIVE_STATE 1
 
@@ -64,8 +62,6 @@ extern "C" {
 
 #define BSP_LED_0      6
 #define BSP_LED_1      4
-#define BSP_LED_2      30
-#define BSP_LED_2      28
 
 #define BUTTONS_NUMBER 1
 

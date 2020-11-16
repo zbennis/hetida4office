@@ -16,7 +16,7 @@
 
 /** Actor Framework resources */
 #define MAX_ACTIONS 10
-#define MAX_TRANSACTIONS 4
+#define MAX_TRANSACTIONS 5
 
 NRF_BALLOC_DEF(m_fg_actor_action_pool, sizeof(fg_actor_action_t), MAX_ACTIONS);
 

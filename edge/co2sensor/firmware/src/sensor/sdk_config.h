@@ -1435,7 +1435,7 @@
 // <e> NRFX_LPCOMP_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_LPCOMP_CONFIG_LOG_ENABLED
-#define NRFX_LPCOMP_CONFIG_LOG_ENABLED 1
+#define NRFX_LPCOMP_CONFIG_LOG_ENABLED 0
 #endif
 // <o> NRFX_LPCOMP_CONFIG_LOG_LEVEL  - Default Severity level
 
@@ -2399,7 +2399,7 @@
 // <e> NRFX_RTC_ENABLED - nrfx_rtc - RTC peripheral driver
 //==========================================================
 #ifndef NRFX_RTC_ENABLED
-#define NRFX_RTC_ENABLED 1
+#define NRFX_RTC_ENABLED 0
 #endif
 // <q> NRFX_RTC0_ENABLED  - Enable RTC0 instance
 
@@ -3292,7 +3292,7 @@
 // <e> NRFX_TWIM_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_TWIM_CONFIG_LOG_ENABLED
-#define NRFX_TWIM_CONFIG_LOG_ENABLED 1
+#define NRFX_TWIM_CONFIG_LOG_ENABLED 0
 #endif
 // <o> NRFX_TWIM_CONFIG_LOG_LEVEL  - Default Severity level
 
@@ -3831,7 +3831,7 @@
 // <e> NRFX_USBD_ENABLED - nrfx_usbd - USBD peripheral driver
 //==========================================================
 #ifndef NRFX_USBD_ENABLED
-#define NRFX_USBD_ENABLED 0
+#define NRFX_USBD_ENABLED 1
 #endif
 // <o> NRFX_USBD_CONFIG_IRQ_PRIORITY  - Interrupt priority
 
@@ -3846,6 +3846,15 @@
 
 #ifndef NRFX_USBD_CONFIG_IRQ_PRIORITY
 #define NRFX_USBD_CONFIG_IRQ_PRIORITY 6
+#endif
+
+// <o> NRFX_USBD_CONFIG_DMASCHEDULER_MODE  - USBD DMA scheduler working scheme
+ 
+// <0=> Prioritized access 
+// <1=> Round Robin 
+
+#ifndef NRFX_USBD_CONFIG_DMASCHEDULER_MODE
+#define NRFX_USBD_CONFIG_DMASCHEDULER_MODE 0
 #endif
 
 // <q> USBD_CONFIG_DMASCHEDULER_ISO_BOOST  - Give priority to isochronous transfers
@@ -3884,7 +3893,7 @@
 // <4=> Debug
 
 #ifndef NRFX_USBD_CONFIG_LOG_LEVEL
-#define NRFX_USBD_CONFIG_LOG_LEVEL 3
+#define NRFX_USBD_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> NRFX_USBD_CONFIG_INFO_COLOR  - ANSI escape code prefix.
@@ -4101,6 +4110,70 @@
 
 // </e>
 
+// <q> SYSTICK_ENABLED  - nrf_drv_systick - ARM(R) SysTick driver - legacy layer
+ 
+
+#ifndef SYSTICK_ENABLED
+#define SYSTICK_ENABLED 1
+#endif
+
+// <e> USBD_ENABLED - nrf_drv_usbd - Software Component
+//==========================================================
+#ifndef USBD_ENABLED
+#define USBD_ENABLED 1
+#endif
+// <o> USBD_CONFIG_IRQ_PRIORITY  - Interrupt priority
+ 
+
+// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
+// <0=> 0 (highest) 
+// <1=> 1 
+// <2=> 2 
+// <3=> 3 
+// <4=> 4 
+// <5=> 5 
+// <6=> 6 
+// <7=> 7 
+
+#ifndef USBD_CONFIG_IRQ_PRIORITY
+#define USBD_CONFIG_IRQ_PRIORITY 6
+#endif
+
+// <o> USBD_CONFIG_DMASCHEDULER_MODE  - USBD SMA scheduler working scheme
+ 
+// <0=> Prioritized access 
+// <1=> Round Robin 
+
+#ifndef USBD_CONFIG_DMASCHEDULER_MODE
+#define USBD_CONFIG_DMASCHEDULER_MODE 0
+#endif
+
+// <q> USBD_CONFIG_DMASCHEDULER_ISO_BOOST  - Give priority to isochronous transfers
+ 
+
+// <i> This option gives priority to isochronous transfers.
+// <i> Enabling it assures that isochronous transfers are always processed,
+// <i> even if multiple other transfers are pending.
+// <i> Isochronous endpoints are prioritized before the usbd_dma_scheduler_algorithm
+// <i> function is called, so the option is independent of the algorithm chosen.
+
+#ifndef USBD_CONFIG_DMASCHEDULER_ISO_BOOST
+#define USBD_CONFIG_DMASCHEDULER_ISO_BOOST 1
+#endif
+
+// <q> USBD_CONFIG_ISO_IN_ZLP  - Respond to an IN token on ISO IN endpoint with ZLP when no data is ready
+ 
+
+// <i> If set, ISO IN endpoint will respond to an IN token with ZLP when no data is ready to be sent.
+// <i> Else, there will be no response.
+// <i> NOTE: This option does not work on Engineering A chip.
+
+#ifndef USBD_CONFIG_ISO_IN_ZLP
+#define USBD_CONFIG_ISO_IN_ZLP 0
+#endif
+
+// </e>
+
 // </h> 
 //==========================================================
 
@@ -4292,7 +4365,7 @@
 // <e> APP_USBD_ENABLED - app_usbd - USB Device library
 //==========================================================
 #ifndef APP_USBD_ENABLED
-#define APP_USBD_ENABLED 0
+#define APP_USBD_ENABLED 1
 #endif
 // <o> APP_USBD_VID - Vendor ID.  <0x0000-0xFFFF> 
 
@@ -4301,7 +4374,7 @@
 // <i> Vendor ID ordered from USB IF: http://www.usb.org/developers/vendor/
 
 #ifndef APP_USBD_VID
-#define APP_USBD_VID 0
+#define APP_USBD_VID 0x1915
 #endif
 
 // <o> APP_USBD_PID - Product ID.  <0x0000-0xFFFF> 
@@ -4311,7 +4384,7 @@
 // <i> Selected Product ID
 
 #ifndef APP_USBD_PID
-#define APP_USBD_PID 0
+#define APP_USBD_PID 0xCAFE
 #endif
 
 // <o> APP_USBD_DEVICE_VER_MAJOR - Major device version  <0-99> 
@@ -4505,7 +4578,7 @@
  
 
 #ifndef APP_USBD_STRING_SERIAL_EXTERN
-#define APP_USBD_STRING_SERIAL_EXTERN 0
+#define APP_USBD_STRING_SERIAL_EXTERN 1
 #endif
 
 // <s> APP_USBD_STRING_SERIAL - String descriptor for the serial number.
@@ -4513,7 +4586,7 @@
 // <i> Note: This value is not editable in Configuration Wizard.
 // <i> Serial number that is defined the same way like in @ref APP_USBD_STRINGS_MANUFACTURER.
 #ifndef APP_USBD_STRING_SERIAL
-#define APP_USBD_STRING_SERIAL APP_USBD_STRING_DESC("000000000000")
+#define APP_USBD_STRING_SERIAL g_extern_serial_number
 #endif
 
 // </e>
@@ -4877,21 +4950,21 @@
 
 
 #ifndef MEMORY_MANAGER_SMALL_BLOCK_COUNT
-#define MEMORY_MANAGER_SMALL_BLOCK_COUNT 8
+#define MEMORY_MANAGER_SMALL_BLOCK_COUNT 64
 #endif
 
 // <o> MEMORY_MANAGER_SMALL_BLOCK_SIZE -  Size of each memory blocks identified as 'small' block. 
 // <i>  Size of each memory blocks identified as 'small' block. Memory block are recommended to be word-sized.
 
 #ifndef MEMORY_MANAGER_SMALL_BLOCK_SIZE
-#define MEMORY_MANAGER_SMALL_BLOCK_SIZE 128
+#define MEMORY_MANAGER_SMALL_BLOCK_SIZE 64
 #endif
 
 // <o> MEMORY_MANAGER_MEDIUM_BLOCK_COUNT - Size of each memory blocks identified as 'medium' block.  <0-255> 
 
 
 #ifndef MEMORY_MANAGER_MEDIUM_BLOCK_COUNT
-#define MEMORY_MANAGER_MEDIUM_BLOCK_COUNT 4
+#define MEMORY_MANAGER_MEDIUM_BLOCK_COUNT 16
 #endif
 
 // <o> MEMORY_MANAGER_MEDIUM_BLOCK_SIZE -  Size of each memory blocks identified as 'medium' block. 
@@ -5462,7 +5535,7 @@
  
 
 #ifndef BUTTON_ENABLED
-#define BUTTON_ENABLED 0
+#define BUTTON_ENABLED 1
 #endif
 
 // <q> BUTTON_HIGH_ACCURACY_ENABLED  - Enables GPIOTE high accuracy for buttons
@@ -5482,7 +5555,7 @@
  
 
 #ifndef APP_USBD_CDC_ACM_ENABLED
-#define APP_USBD_CDC_ACM_ENABLED 0
+#define APP_USBD_CDC_ACM_ENABLED 1
 #endif
 
 // <q> APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE  - Send ZLP on write with same size as endpoint
@@ -7107,7 +7180,7 @@
 // <e> APP_BUTTON_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef APP_BUTTON_CONFIG_LOG_ENABLED
-#define APP_BUTTON_CONFIG_LOG_ENABLED 0
+#define APP_BUTTON_CONFIG_LOG_ENABLED 1
 #endif
 // <o> APP_BUTTON_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -7118,7 +7191,7 @@
 // <4=> Debug 
 
 #ifndef APP_BUTTON_CONFIG_LOG_LEVEL
-#define APP_BUTTON_CONFIG_LOG_LEVEL 3
+#define APP_BUTTON_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> APP_BUTTON_CONFIG_INITIAL_LOG_LEVEL  - Initial severity level if dynamic filtering is enabled.
@@ -7252,7 +7325,7 @@
 // <4=> Debug 
 
 #ifndef APP_USBD_CDC_ACM_CONFIG_LOG_LEVEL
-#define APP_USBD_CDC_ACM_CONFIG_LOG_LEVEL 3
+#define APP_USBD_CDC_ACM_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> APP_USBD_CDC_ACM_CONFIG_INFO_COLOR  - ANSI escape code prefix.
@@ -7303,7 +7376,7 @@
 // <4=> Debug 
 
 #ifndef APP_USBD_CONFIG_LOG_LEVEL
-#define APP_USBD_CONFIG_LOG_LEVEL 3
+#define APP_USBD_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> APP_USBD_CONFIG_INFO_COLOR  - ANSI escape code prefix.
@@ -7405,7 +7478,7 @@
 // <4=> Debug 
 
 #ifndef APP_USBD_MSC_CONFIG_LOG_LEVEL
-#define APP_USBD_MSC_CONFIG_LOG_LEVEL 3
+#define APP_USBD_MSC_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> APP_USBD_MSC_CONFIG_INFO_COLOR  - ANSI escape code prefix.
@@ -8235,7 +8308,7 @@
 // <e> NRF_SDH_BLE_LOG_ENABLED - Enable logging in SoftDevice handler (BLE) module.
 //==========================================================
 #ifndef NRF_SDH_BLE_LOG_ENABLED
-#define NRF_SDH_BLE_LOG_ENABLED 1
+#define NRF_SDH_BLE_LOG_ENABLED 0
 #endif
 // <o> NRF_SDH_BLE_LOG_LEVEL  - Default Severity level
  
@@ -8286,7 +8359,7 @@
 // <e> NRF_SDH_LOG_ENABLED - Enable logging in SoftDevice handler module.
 //==========================================================
 #ifndef NRF_SDH_LOG_ENABLED
-#define NRF_SDH_LOG_ENABLED 1
+#define NRF_SDH_LOG_ENABLED 0
 #endif
 // <o> NRF_SDH_LOG_LEVEL  - Default Severity level
  
@@ -8490,7 +8563,7 @@
 // <e> PM_LOG_ENABLED - Enable logging in Peer Manager and its submodules.
 //==========================================================
 #ifndef PM_LOG_ENABLED
-#define PM_LOG_ENABLED 1
+#define PM_LOG_ENABLED 0
 #endif
 // <o> PM_LOG_LEVEL  - Default Severity level
  

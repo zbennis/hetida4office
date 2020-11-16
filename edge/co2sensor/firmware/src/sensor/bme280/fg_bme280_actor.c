@@ -48,7 +48,6 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
 
 static bool m_hard_reset;
 static bool m_i2c_enabled;
-static bool m_rtc_enabled;
 
 
 /** BME280 resources */
@@ -66,7 +65,7 @@ static bool m_rtc_enabled;
 // tMEASURE delay (max, in ms) ==
 //   1.25 + (2.3 * T-OSR) + (2.3 * P-OSR + 0.575) + (2.3 * H-OSR + 0.575),
 // see BME280 spec, 9.1, , calculate using (4)
-#define BME280_MEASUREMENT_DELAY_US (1250 + (2300 * 1) + (2300 * 1 + 575) + (2300 * 1 + 575))
+#define BME280_MEASUREMENT_DELAY_MS ((uint32_t)CEIL_DIV(1250 + (2300 * 1) + (2300 * 1 + 575) + (2300 * 1 + 575), 1000))
 
 static struct bme280_calib_data m_calib_data;
 
@@ -87,11 +86,6 @@ __STATIC_INLINE void fg_bme280_i2c_reset_current_transaction(void)
     m_current_i2c_transaction.rx_size = 0;
     m_current_i2c_transaction.p_rx_data = NULL;
 }
-
-
-/** RTC child actor resources */
-#define BME280_RTC_RESET_DELAY_TICKS FG_RTC_ACTOR_MS_TO_TICKS(BME280_RESET_DELAY_MS)
-#define BME280_RTC_MEASUREMENT_DELAY_TICKS FG_RTC_ACTOR_US_TO_TICKS(BME280_MEASUREMENT_DELAY_US)
 
 static uint32_t m_current_timeout;
 
@@ -121,9 +115,6 @@ FG_ACTOR_SLOT(fg_bme280_reset)
 
     FG_ACTOR_POST_MESSAGE(i2c, FG_I2C_ENABLE);
     m_i2c_enabled = true;
-
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_ENABLE);
-    m_rtc_enabled = true;
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_reset_read_chip_id);
 }
@@ -170,7 +161,7 @@ FG_ACTOR_RESULT_HANDLER(fg_bme280_reset_wait)
     m_i2c_enabled = false;
 
     fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_START_TIMER);
-    m_current_timeout = BME280_RTC_RESET_DELAY_TICKS;
+    m_current_timeout = BME280_RESET_DELAY_MS;
     FG_ACTOR_SET_ARGS(p_next_action, m_current_timeout);
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_reset_reenable_i2c);
@@ -290,9 +281,6 @@ FG_ACTOR_RESULT_HANDLER(fg_bme280_reset_finalize)
     FG_ACTOR_POST_MESSAGE(i2c, FG_I2C_DISABLE);
     m_i2c_enabled = false;
 
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_DISABLE);
-    m_rtc_enabled = false;
-
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_reset_finished);
 }
 
@@ -314,9 +302,6 @@ FG_ACTOR_SLOT(fg_bme280_measure)
 
     FG_ACTOR_POST_MESSAGE(i2c, FG_I2C_ENABLE);
     m_i2c_enabled = true;
-
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_ENABLE);
-    m_rtc_enabled = true;
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_measure_write_meas_cmd);
 }
@@ -347,7 +332,7 @@ FG_ACTOR_RESULT_HANDLER(fg_bme280_measure_wait)
     m_i2c_enabled = false;
 
     fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_START_TIMER);
-    m_current_timeout = BME280_RTC_MEASUREMENT_DELAY_TICKS;
+    m_current_timeout = BME280_MEASUREMENT_DELAY_MS;
     FG_ACTOR_SET_ARGS(p_next_action, m_current_timeout);
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_measure_reenable_i2c);
@@ -407,9 +392,6 @@ FG_ACTOR_RESULT_HANDLER(fg_bme280_measure_finalize)
     FG_ACTOR_POST_MESSAGE(i2c, FG_I2C_DISABLE);
     m_i2c_enabled = false;
 
-    FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_DISABLE);
-    m_rtc_enabled = false;
-
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_measure_finished);
 }
 
@@ -444,11 +426,6 @@ FG_ACTOR_RESULT_HANDLER(fg_bme280_hard_reset)
     {
         FG_ACTOR_POST_MESSAGE(i2c, FG_I2C_DISABLE);
         m_i2c_enabled = false;
-    }
-    if (m_rtc_enabled)
-    {
-        FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_DISABLE);
-        m_rtc_enabled = false;
     }
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_bme280_hard_reset_done);

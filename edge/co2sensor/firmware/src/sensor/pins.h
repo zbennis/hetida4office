@@ -21,6 +21,9 @@
 #define PIN_A5_LPCOMP NRF_LPCOMP_INPUT_1 // AIN1 -- reserved for LPCOMP peripheral
 
 #define PIN_LED1 NRF_GPIO_PIN_MAP(0, 6)
+#define PIN_LED2 NRF_GPIO_PIN_MAP(0, 4)
+#define PIN_LED3 NRF_GPIO_PIN_MAP(0, 30)
+#define PIN_LED4 NRF_GPIO_PIN_MAP(0, 28)
 #define PIN_SWITCH NRF_GPIO_PIN_MAP(0, 29) // AIN5
 
 #define PIN_DOT_DATA NRF_GPIO_PIN_MAP(0, 8)
@@ -59,6 +62,6 @@
 #define PIN_I2C_SCL PIN_SCL
 
 // MQTTSN
-#define PIN_MQTTSN_CONNECTION_STATUS PIN_LED1
+#define PIN_MQTTSN_CONNECTION_STATUS PIN_LED4
 
 #define NUM_DIGITAL_IN 1 // required to configure resources for GPIOTE event listeners
