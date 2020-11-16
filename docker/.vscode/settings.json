@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "h4o",
+            "database": "h4o",
+            "username": "admin",
+            "password": "admin"
+        }
+    ]
+}
