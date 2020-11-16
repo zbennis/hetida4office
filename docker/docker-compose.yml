@@ -42,10 +42,13 @@ services:
             - "9092:9092"
         volumes:
             - ./data/kafka/kafka-logs:/kafka.logs
-            - ./kafka/create-topic.sh:/docker-entrypoint-initdb.d/create-topic.sh
+            - ./kafka/create-topics.sh:/docker-entrypoint-initdb.d/create-topics.sh
         environment:
-            KAFKA_ADVERTISED_HOST_NAME: localhost
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://localhost:9092
+            KAFKA_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://0.0.0.0:9092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_LOCALHOST:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
         logging:
             driver: "json-file"
             options:
@@ -54,6 +57,29 @@ services:
         depends_on:
             - zookeeper
         restart: unless-stopped
+    connector-mqtt:
+        build:
+            context: ../
+            dockerfile: Dockerfile.connector.mqtt
+        ports:
+        - 8095:8095
+        depends_on:
+           - hivemq-ce
+           - zookeeper
+           - kafka
+    h4o-kafka-consumer:
+        build:
+            context: ../
+            dockerfile: Dockerfile.h4o.kafka.consumer
+        ports:
+        - 8385:8385
+        depends_on:
+           - timescale
+           - kafka   
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - 3000:3000
 volumes:
     timescale_data:
         driver: local
