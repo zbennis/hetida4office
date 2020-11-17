@@ -216,6 +216,7 @@ static void fg_mqttsn_state_changed_callback(uint32_t flags, void * p_context)
     {
         APP_ERROR_CHECK(mqttsn_client_search_gateway(&m_fg_mqttsn_client, SEARCH_GATEWAY_TIMEOUT));
     }
+    // TODO: Reconnect if role is degraded to "1"
 }
 
 static void fg_mqttsn_register_topic(const uint8_t topic_id)
