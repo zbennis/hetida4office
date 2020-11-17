@@ -20,10 +20,9 @@ import java.util.List;
 class KafkaProducer {
     private final KafkaTemplate<String, byte[]> kafkaTemplate;
     @Value("${kafka.topic.channel.value.name}")
-    private final String topicTimeSeries;
+    private String topicTimeSeries;
 
     public KafkaProducer(final KafkaTemplate<String, byte[]> kafkaTemplate) {
-        topicTimeSeries = "timeseries";
         log.info("Initialize kafka producer for topic TS {} ", topicTimeSeries);
         this.kafkaTemplate = kafkaTemplate;
     }
@@ -35,7 +34,7 @@ class KafkaProducer {
             try {
                 kafkaTemplate.send(topicTimeSeries, MeasurementSerializer.serializeMeasurement(measurement));
             } catch (final JsonProcessingException e) {
-                log.error("");
+                log.error("Error while sending measurement [{}] to kafka -> {}", measurement, e.getMessage());
             }
         });
     }
