@@ -1,6 +1,4 @@
-provider "kubernetes" {}
-
-resource "kubernetes_namespace" "example" {
+resource "kubernetes_namespace" "hetida4office" {
   metadata {
     annotations = {
       name = "hetida4office"

@@ -1,8 +1,3 @@
-provider "azurerm" {
-  version = "~> 2.0"
-  features {}
-}
-
 resource "azurerm_resource_group" "h4o" {
   name     = "hetida4office-rg"
   location = "West Europe"
@@ -43,4 +38,13 @@ resource "azurerm_kubernetes_cluster" "h4o" {
   tags = {
     environment = "Demo"
   }
+}
+
+resource "azurerm_managed_disk" "h4o" {
+  name = "hetida4office"
+  location = azurerm_kubernetes_cluster.h4o.location
+  resource_group_name = azurerm_kubernetes_cluster.h4o.node_resource_group
+  storage_account_type = "Standard_LRS"
+  create_option = "Empty"
+  disk_size_gb = "2"
 }

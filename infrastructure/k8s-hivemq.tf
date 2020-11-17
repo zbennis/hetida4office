@@ -1,18 +1,16 @@
 resource "kubernetes_pod" "hivemq" {
   metadata {
     name = "hetida4office-hivemq"
-    namespace = "hetida4office"
+    namespace = kubernetes_namespace.hetida4office.metadata[0].name
     labels = {
       application = "hetida4office"
       service = "hivemq"
     }
   }
-
   spec {
     container {
       image = "hivemq/hivemq-ce"
       name  = "hivemq-ce"
-
       port {
         container_port = 1883
       }
@@ -23,9 +21,9 @@ resource "kubernetes_pod" "hivemq" {
 resource "kubernetes_service" "hivemq" {
   metadata {
     name = "hetida4office-hivemq"
-    namespace = "hetida4office"
+    namespace = kubernetes_namespace.hetida4office.metadata[0].name
     labels = {
-        application = "hetida4water"
+        application = "hetida4office"
         service = "hivemq"
     }
   }
@@ -37,7 +35,6 @@ resource "kubernetes_service" "hivemq" {
       port        = 1883
       target_port = 1883
     }
-
     type = "LoadBalancer"
   }
 }
