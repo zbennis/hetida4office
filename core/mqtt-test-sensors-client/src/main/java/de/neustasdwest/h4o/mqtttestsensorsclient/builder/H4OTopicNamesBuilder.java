@@ -1,4 +1,4 @@
-package de.neustasdwest.h4o.connectormqtt.client.builder;
+package de.neustasdwest.h4o.mqtttestsensorsclient.builder;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,27 +11,27 @@ import java.util.Set;
 
 @Log4j2
 @Component
-public class H4OTopicNamesBuilder implements TopicNamesBuilder {
+public class H4OTopicNamesBuilder implements TopicNamesBuilder{
+    private final String[] topicSuffixes;
     private final String topicPrefix;
-    private final String[] topicsSuffixes;
     private final String[] devicesNames;
 
-    public H4OTopicNamesBuilder( @Value("${h4o.device.topic.prefix}") final String topicPrefix,
-                                 @Value("${h4o.device.topic.suffixes}")final String[] topicsSuffixes,
+    public H4OTopicNamesBuilder( @Value("${h4o.device.topic.prefix}")final String topicPrefix,
+                                 @Value("${h4o.device.topic.suffixes}") final String[] topicSuffixes,
                                  @Value("${h4o.devices.names}") final String[] devicesNames) {
+        this.topicSuffixes = topicSuffixes;
         this.topicPrefix = topicPrefix;
-        this.topicsSuffixes = topicsSuffixes;
         this.devicesNames = devicesNames;
     }
 
     @Override
     public Set<String> buildTopicNames() {
-        Objects.requireNonNull(topicPrefix,"Topic prefix must not be null");
-        Objects.requireNonNull(topicsSuffixes, "Topics suffixes must not be null");
+        Objects.requireNonNull(topicSuffixes,"Topic suffixes must not be null");
+        Objects.requireNonNull(topicPrefix, "Topics prefix must not be null");
         Objects.requireNonNull(devicesNames, "Devices names must not be null");
         log.info("Generating topic names...");
         final Set<String> topics = new HashSet<>();
-        Arrays.asList(topicsSuffixes).forEach(suffix -> {
+        Arrays.asList(topicSuffixes).forEach(suffix -> {
             Arrays.asList(devicesNames).forEach(deviceName -> {
                 final String newTopicName = String.join("/", topicPrefix, deviceName, suffix);
                 log.info(newTopicName);

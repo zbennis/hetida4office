@@ -80,6 +80,16 @@ services:
         depends_on:
            - timescale
            - kafka   
+    mqtt-test-sensors-client:
+        build:
+            context: ../
+            dockerfile: Dockerfile.h4o.mqtt.test.sensors.client
+        environment:
+            - "SPRING_PROFILES_ACTIVE=docker"
+        ports:
+        - 8096:8096
+        depends_on:
+           - hivemq-ce
     grafana:
         image: grafana/grafana:latest
         ports:

@@ -19,7 +19,7 @@
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring.boot.version>2.2.5.RELEASE</spring.boot.version>
+        <spring.boot.version>2.4.0</spring.boot.version>
         <spring.kafka.version>2.4.3.RELEASE</spring.kafka.version>
         <spring.aspects.version>5.2.4.RELEASE</spring.aspects.version>
         <spring.context.version>5.2.4.RELEASE</spring.context.version>
@@ -43,6 +43,7 @@
         <module>mqtt-kafka-common</module>
         <module>mqtt-gateway-to-kafka</module>
         <module>h4o-kafka-consumer</module>
+        <module>mqtt-test-sensors-client</module>
     </modules>
 
     <build>

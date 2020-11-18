@@ -39,7 +39,7 @@ public class H4OSingletonMqttClient {
 
     public void connect() {
         if(!client.getState().isConnected()) {
-            log.info("Connecting client...");
+            log.info("Connecting to mqtt client at {}...",mqttBrokerHost);
             client.connect();
             return;
         }
