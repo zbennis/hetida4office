@@ -64,6 +64,8 @@ CREATE TABLE timeseries.substitutions
     PRIMARY KEY(timestamp, channel_id)
 );
 
+-- Insert devices structure
+
 INSERT INTO metadata.thing_nodes (id, parent_id, name, description)
 VALUES ('H4O', null, 'H4O Geräte', 'H4O - Geräte - Description');
 
@@ -86,17 +88,3 @@ VALUES ('TEMP', 'S1', 'TEMP', 'TEMP Description', 'unit', true);
 -- VALUES ('HUMIDITY', 'LA1', 'HUMIDITY', 'Humidity Description', 'unit', true);
 -- INSERT INTO metadata.channels(id, thing_id, name, description, unit, is_writable)
 -- VALUES ('PRESSURE', 'LA1', 'PRESSURE', 'Pressure Beschreibung', 'unit', true);
-
-
--- Tune timescaledb for timeseries
-SELECT create_hypertable('timeseries.measurements', 'timestamp');
-ALTER TABLE timeseries.measurements SET (timescaledb.compress,timescaledb.compress_segmentby = 'channel_id');
-SELECT add_compress_chunks_policy('timeseries.measurements', INTERVAL '7 days');
-
-SELECT create_hypertable('timeseries.substitutions', 'timestamp');
-ALTER TABLE timeseries.substitutions SET (timescaledb.compress,timescaledb.compress_segmentby = 'channel_id');
-SELECT add_compress_chunks_policy('timeseries.substitutions', INTERVAL '7 days');
-
-SELECT create_hypertable('timeseries.messages', 'timestamp');
-ALTER TABLE timeseries.messages SET (timescaledb.compress,timescaledb.compress_segmentby = 'channel_id');
-SELECT add_compress_chunks_policy('timeseries.messages', INTERVAL '7 days');
