@@ -32,7 +32,6 @@
             <artifactId>spring-kafka</artifactId>
             <version>${spring.kafka.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -49,17 +48,26 @@
             <artifactId>mqtt-kafka-common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>${flyway.core.version}</version>
+        </dependency>
 <!--        &lt;!&ndash; https://mvnrepository.com/artifact/io.r2dbc/r2dbc-postgresql &ndash;&gt;-->
 <!--        <dependency>-->
 <!--            <groupId>io.r2dbc</groupId>-->
 <!--            <artifactId>r2dbc-postgresql</artifactId>-->
 <!--            <version>0.8.6.RELEASE</version>-->
 <!--        </dependency>-->
-
     </dependencies>
 
     <build>
+         <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
