@@ -1,85 +1,99 @@
 version: '3'
 services:
-  timescale:
-    image: timescale/timescaledb:latest-pg12
-    volumes:
-      - timescale_data:/var/lib/postgresql/data
-      - ./timescale/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - '5432:5432'
-    environment:
-      POSTGRES_DB: h4o
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '200k'
-        max-file: '10'
-  hivemq-ce:
-    image: hivemq/hivemq-ce
-    ports:
-      - '1883:1883'
-  zookeeper:
-    image: wurstmeister/zookeeper
-    hostname: zookeeper
-    ports:
-      - '2181:2181'
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '200k'
-        max-file: '10'
-    environment:
-      ZOO_MY_ID: 1
-    volumes:
-      - ./data/zookeeper/data:/data
-      - ./data/zookeeper/datalog:/datalog
-    restart: unless-stopped
-  kafka:
-    image: wurstmeister/kafka
-    ports:
-      - '9092:9092'
-    volumes:
-      - ./data/kafka/kafka-logs:/kafka.logs
-      - ./kafka/create-topics.sh:/docker-entrypoint-initdb.d/create-topics.sh
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://localhost:9092
-      KAFKA_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://0.0.0.0:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_LOCALHOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '200k'
-        max-file: '10'
-    depends_on:
-      - zookeeper
-    restart: unless-stopped
-  connector-mqtt:
-    build:
-      context: ../
-      dockerfile: Dockerfile.connector.mqtt
-    ports:
-      - 8095:8095
-    depends_on:
-      - hivemq-ce
-      - zookeeper
-      - kafka
-  h4o-kafka-consumer:
-    build:
-      context: ../
-      dockerfile: Dockerfile.h4o.kafka.consumer
-    ports:
-      - 8385:8385
-    depends_on:
-      - timescale
-      - kafka
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - 3000:3000
+    timescale:
+        image: timescale/timescaledb:latest-pg12
+        volumes:
+            - timescale_data:/var/lib/postgresql/data
+            - ./timescale/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: h4o
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: admin
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+    hivemq-ce:
+        image: hivemq/hivemq-ce
+        ports:
+            - "1883:1883"
+    zookeeper:
+        image: wurstmeister/zookeeper
+        hostname: zookeeper
+        ports:
+            - "2181:2181"
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+        environment:
+            ZOO_MY_ID: 1
+        volumes:
+            - ./data/zookeeper/data:/data
+            - ./data/zookeeper/datalog:/datalog
+        restart: unless-stopped
+    kafka:
+        image: wurstmeister/kafka
+        ports:
+            - "9092:9092"
+        volumes:
+            - ./data/kafka/kafka-logs:/kafka.logs
+            - ./kafka/create-topics.sh:/docker-entrypoint-initdb.d/create-topics.sh
+        environment:
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://localhost:9092
+            KAFKA_LISTENERS: PLAINTEXT://kafka:29092, PLAINTEXT_LOCALHOST://0.0.0.0:9092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_LOCALHOST:PLAINTEXT
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "200k"
+                max-file: "10"
+        depends_on:
+            - zookeeper
+        restart: unless-stopped
+    connector-mqtt:
+        build:
+            context: ../
+            dockerfile: Dockerfile.h4o.connector.mqtt
+        environment:
+            - "SPRING_PROFILES_ACTIVE=docker"
+        ports:
+        - 8095:8095
+        depends_on:
+           - hivemq-ce
+           - zookeeper
+           - kafka
+    h4o-kafka-consumer:
+        build:
+            context: ../
+            dockerfile: Dockerfile.h4o.kafka.consumer
+        environment:
+            - "SPRING_PROFILES_ACTIVE=docker"
+        ports:
+        - 8385:8385
+        depends_on:
+           - timescale
+           - kafka   
+    mqtt-test-sensors-client:
+        build:
+            context: ../
+            dockerfile: Dockerfile.h4o.mqtt.test.sensors.client
+        environment:
+            - "SPRING_PROFILES_ACTIVE=docker"
+        ports:
+        - 8096:8096
+        depends_on:
+           - hivemq-ce
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - 3000:3000
 volumes:
   timescale_data:
     driver: local

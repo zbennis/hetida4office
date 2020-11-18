@@ -33,7 +33,7 @@ public class KafkaConsumer {
         log.info("Consuming Topic {} record from partition {} with offset {}.", cr.topic(), cr.partition(), cr.offset());
         final Measurement measurement = deserializeMeasurement(cr.value());
         this.tsWriter.batchInsertMeasurements(singletonList(measurement));
-        log.info("Added Measurement: channelId -> {}, timestamp -> {}, measurements -> {}",
+        log.info("Added Measurement: channelId::{}, timestamp::{}, measurement::{}",
                 measurement.getChannelId(),
                 measurement.getTimestamp(),
                 measurement.getMeasurement());
