@@ -1,0 +1,17 @@
+os: linux
+dist: trusty
+
+language: java
+jdk: 
+  - openjdk11
+
+services:
+  - docker
+
+before_install:
+  - chmod +x ./.travis/docker-build-and-push.sh
+
+script: cd ./core && mvn clean package
+
+after_success: 
+  - bash ./.travis/docker-build-and-push.sh
