@@ -28,10 +28,16 @@ static const uint32_t m_main_idle_time = MAIN_IDLE_TIME_MS;
 
 /** MQTTSN child actor resources */
 static const fg_actor_t * m_p_mqttsn_actor;
-static char m_mqttsn_message_buffer[20];
-static fg_mqttsn_message_t m_mqttsn_message = {
-  .p_data = m_mqttsn_message_buffer
+static char m_mqttsn_message_buffer[FG_MQTT_TOPIC_NUM][20];
+
+static fg_mqttsn_message_t m_mqttsn_message[FG_MQTT_TOPIC_NUM] = {
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_PRESSURE]},
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_TEMPERATURE]},
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_HUMIDITY]},
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_CO2]},
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_STATUS]},
 };
+
 
 /** Main loop */
 
@@ -57,7 +63,7 @@ int main(void)
 
     m_p_rtc_actor = fg_rtc_actor_init(); // Starts the RTC clock - so must be called before
                                          // any other actor requiring RTC service.
-    m_p_mqttsn_actor = fg_mqttsn_actor_init(); 
+    m_p_mqttsn_actor = fg_mqttsn_actor_init();
     m_p_bme280_actor = fg_bme280_actor_init();
     m_p_lp8_actor = fg_lp8_actor_init();
 
@@ -80,11 +86,12 @@ int main(void)
 }
 
 
-static void check_publish_action(const fg_actor_action_t * const p_completed_action) {
-        ASSERT(p_completed_action != NULL);
-        ASSERT(p_completed_action->p_actor == m_p_mqttsn_actor)
-        ASSERT(p_completed_action->message.code == FG_MQTTSN_PUBLISH)
-        CHECK_COMPLETED_ACTION(p_completed_action, "MQTT publishing error!");
+static void check_publish_action(const fg_actor_action_t * const p_completed_action)
+{
+    ASSERT(p_completed_action != NULL);
+    ASSERT(p_completed_action->p_actor == m_p_mqttsn_actor)
+    ASSERT(p_completed_action->message.code == FG_MQTTSN_PUBLISH)
+    CHECK_COMPLETED_ACTION(p_completed_action, "MQTT publishing error!");
 }
 
 /** Implementation */
@@ -123,14 +130,16 @@ FG_ACTOR_RESULT_HANDLER(init_or_wakeup_result_handler)
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(pressure_measurement_result_handler);
 }
 
-static void publish_measurement(fg_actor_transaction_t *const p_next_transaction, int32_t measurement, uint16_t topic_id) {
-    snprintf(m_mqttsn_message_buffer, sizeof(m_mqttsn_message_buffer), "%d", measurement);
-    m_mqttsn_message.size = strlen(m_mqttsn_message_buffer);
-    ASSERT(m_mqttsn_message.size <= sizeof(m_mqttsn_message_buffer));
-    m_mqttsn_message.topic_id = topic_id;
+static void publish_measurement(
+    fg_actor_transaction_t * const p_next_transaction, int32_t measurement, uint16_t topic_id)
+{
+    snprintf(m_mqttsn_message_buffer[topic_id], sizeof(m_mqttsn_message_buffer[topic_id]), "%d", measurement);
+    m_mqttsn_message[topic_id].size = strlen(m_mqttsn_message_buffer[topic_id]);
+    ASSERT(m_mqttsn_message[topic_id].size <= sizeof(m_mqttsn_message_buffer[topic_id]));
+    m_mqttsn_message[topic_id].topic_id = topic_id;
 
     fg_actor_action_t * p_next_action = FG_ACTOR_POST_MESSAGE(mqttsn, FG_MQTTSN_PUBLISH);
-    FG_ACTOR_SET_ARGS(p_next_action, m_mqttsn_message);
+    FG_ACTOR_SET_ARGS(p_next_action, m_mqttsn_message[topic_id]);
 }
 
 FG_ACTOR_RESULT_HANDLER(pressure_measurement_result_handler)
@@ -156,7 +165,8 @@ FG_ACTOR_RESULT_HANDLER(pressure_measurement_result_handler)
 
     FG_ACTOR_SET_P_RESULT(p_next_action, fg_lp8_measurement_t, &lp8_measurement);
 
-    publish_measurement(p_next_transaction, p_measurement_result->temperature, FG_MQTT_TOPIC_TEMPERATURE);
+    publish_measurement(
+        p_next_transaction, p_measurement_result->temperature, FG_MQTT_TOPIC_TEMPERATURE);
     publish_measurement(p_next_transaction, p_measurement_result->humidity, FG_MQTT_TOPIC_HUMIDITY);
     publish_measurement(p_next_transaction, p_measurement_result->pressure, FG_MQTT_TOPIC_PRESSURE);
 
@@ -171,8 +181,9 @@ FG_ACTOR_RESULT_HANDLER(co2_measurement_result_handler)
     ASSERT(p_completed_action->p_actor == m_p_lp8_actor)
     ASSERT(p_completed_action->message.code == FG_LP8_MEASURE)
 
-    fg_actor_action_t *publish_action = p_completed_action->p_next_concurrent_action;
-    while(publish_action) {
+    fg_actor_action_t * publish_action = p_completed_action->p_next_concurrent_action;
+    while (publish_action)
+    {
         check_publish_action(publish_action);
         publish_action = publish_action->p_next_concurrent_action;
     }
@@ -185,7 +196,8 @@ FG_ACTOR_RESULT_HANDLER(co2_measurement_result_handler)
     fg_actor_action_t * p_next_action = FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_START_TIMER);
     FG_ACTOR_SET_ARGS(p_next_action, m_main_idle_time);
 
-    publish_measurement(p_next_transaction, p_measurement_result->conc_filtered_pc, FG_MQTT_TOPIC_CO2);
+    publish_measurement(
+        p_next_transaction, p_measurement_result->conc_filtered_pc, FG_MQTT_TOPIC_CO2);
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(init_or_wakeup_result_handler);
 }

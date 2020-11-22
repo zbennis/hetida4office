@@ -1,10 +1,9 @@
 version: '3'
 services:
-    timescale:
+    timescaledb:
         image: timescale/timescaledb:latest-pg12
         volumes:
-            - timescale_data:/var/lib/postgresql/data
-            # - ./timescale/init.sql:/docker-entrypoint-initdb.d/init.sql
+            - timescaledb_data:/var/lib/postgresql/data
         ports:
             - "5432:5432"
         environment:
@@ -78,7 +77,7 @@ services:
         ports:
         - 8385:8385
         depends_on:
-           - timescale
+           - timescaledb
            - kafka   
     mqtt-test-sensors-client:
         build:
@@ -95,5 +94,5 @@ services:
         ports:
             - 3000:3000
 volumes:
-  timescale_data:
+  timescaledb_data:
     driver: local

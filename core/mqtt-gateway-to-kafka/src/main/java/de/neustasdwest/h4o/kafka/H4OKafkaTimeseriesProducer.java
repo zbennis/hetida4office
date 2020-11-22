@@ -17,12 +17,12 @@ import java.util.List;
 @EnableRetry
 @Component
 @Slf4j
-class KafkaProducer {
+class H4OKafkaTimeseriesProducer {
     private final KafkaTemplate<String, byte[]> kafkaTemplate;
     @Value("${kafka.topic.channel.value.name}")
     private String topicTimeSeries;
 
-    public KafkaProducer(final KafkaTemplate<String, byte[]> kafkaTemplate) {
+    public H4OKafkaTimeseriesProducer(final KafkaTemplate<String, byte[]> kafkaTemplate) {
         log.info("Initialize kafka producer for topic TS {} ", topicTimeSeries);
         this.kafkaTemplate = kafkaTemplate;
     }

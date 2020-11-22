@@ -11,15 +11,15 @@ import java.util.List;
 @Component
 @Qualifier("timeScaleDbKafkaGateway")
 @Slf4j
-public class TimeScaleDbKafkaGateway implements TimeScaleDbGateway {
-    private final KafkaProducer kafkaProducer;
+public class H4OKafkaTimeseriesTopicImpl implements H4OKafkaTimeseriesTopic {
+    private final H4OKafkaTimeseriesProducer h4oKafkaTimeseriesProducer;
 
-    public TimeScaleDbKafkaGateway(final KafkaProducer kafkaProducer) {
-        this.kafkaProducer = kafkaProducer;
+    public H4OKafkaTimeseriesTopicImpl(final H4OKafkaTimeseriesProducer h4oKafkaTimeseriesProducer) {
+        this.h4oKafkaTimeseriesProducer = h4oKafkaTimeseriesProducer;
     }
 
     @Override
     public void sendTimeSeriesDecimals(final List<Measurement> measurement) {
-        kafkaProducer.sendDecimalValues(measurement);
+        h4oKafkaTimeseriesProducer.sendDecimalValues(measurement);
     }
 }

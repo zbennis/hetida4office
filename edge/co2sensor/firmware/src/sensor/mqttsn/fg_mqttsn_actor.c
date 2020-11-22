@@ -79,7 +79,7 @@ static uint8_t m_fg_mqttsn_gateway_id;
 
 static const char * const m_fg_mqttsn_topic_names[FG_MQTT_TOPIC_NUM] = {"h4o/s1/press",
     "h4o/s1/temp", "h4o/s1/hum", "h4o/s1/co2",
-    "h4o/s1/status"}; // TODO: pass in as parameter to init call.
+    "h4o/s1/msg"}; // TODO: pass in as parameter to init call.
 
 static mqttsn_topic_t m_fg_mqttsn_topics[FG_MQTT_TOPIC_NUM] = {
     {
