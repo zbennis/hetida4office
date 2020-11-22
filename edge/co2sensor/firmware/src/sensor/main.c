@@ -7,7 +7,6 @@
 #include <nrf_log.h>
 #include <nrf_log_ctrl.h>
 #include <nrf_log_default_backends.h>
-#include <nrf_pwr_mgmt.h>
 #include <stdlib.h>
 #include <thread_utils.h>
 
@@ -37,37 +36,30 @@ static fg_mqttsn_message_t m_mqttsn_message = {
 /** Main loop */
 
 // TODO: connect gpio pin to sleep state and check whether the device is sleeping as intended.
-// TODO: re-measure RTC actor to make sure it still works as intended (timings + current
-//       consumption)
-// TODO: implement board.h to support thread connection indicator LEDs
-// TODO: combine with Thread and MQTT-SN protocols
-// TODO: install and use DC/DC regulator
 // TODO: Make sure EN_BLK_REVERSE is Hi-Z during reset to make sure that VCAP will not
 //       (reverse) aliment 3V3.
-// TODO: implement a keep-alive LED that shortly flashes whenever a keep-alive packet is sent out
-// TODO: implement low-power detection together with a low-power buzzer
-// TODO: use the buzzer also to indicate dangerously high levels of CO2 independently
 // TODO: implement watchdog (capture ASSERTS and show it somehow e.g. via buzzer), stack guard, mpu,
 //       NRFX_PRS
-// TODO: deep sleep (System OFF) between measurements
+// TODO: implement a keep-alive LED that shortly flashes whenever a keep-alive packet is sent out
 // TODO: save sensor state in non-volatile memory after re-calibration and
 //       re-load it after reset (verify first if calibration data is not saved on
 //       chip anyway).
+// TODO: install and use DC/DC regulator
+// TODO: implement low-power detection together with a low-power buzzer
+// TODO: use the buzzer also to indicate dangerously high levels of CO2 independently
 int main(void)
 {
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
     NRF_LOG_INFO("FG sensor app started.");
 
-    APP_ERROR_CHECK(nrf_pwr_mgmt_init());
-
     fg_actor_init();
 
-    m_p_mqttsn_actor = fg_mqttsn_actor_init(); // Implicitly starts the RTC clock - so must be
-                                               // called before initializing the rtc actor.
+    m_p_rtc_actor = fg_rtc_actor_init(); // Starts the RTC clock - so must be called before
+                                         // any other actor requiring RTC service.
+    m_p_mqttsn_actor = fg_mqttsn_actor_init(); 
     m_p_bme280_actor = fg_bme280_actor_init();
     m_p_lp8_actor = fg_lp8_actor_init();
-    m_p_rtc_actor = fg_rtc_actor_init();
 
     fg_actor_transaction_t * const p_init_transaction =
         fg_actor_allocate_root_transaction(init_or_wakeup_result_handler);
@@ -83,8 +75,6 @@ int main(void)
         if (NRF_LOG_PROCESS() == false)
         {
             thread_sleep();
-            // TODO: Remove including pwr mgmt library.
-            // nrf_pwr_mgmt_run();
         }
     }
 }
@@ -167,6 +157,8 @@ FG_ACTOR_RESULT_HANDLER(pressure_measurement_result_handler)
     FG_ACTOR_SET_P_RESULT(p_next_action, fg_lp8_measurement_t, &lp8_measurement);
 
     publish_measurement(p_next_transaction, p_measurement_result->temperature, FG_MQTT_TOPIC_TEMPERATURE);
+    publish_measurement(p_next_transaction, p_measurement_result->humidity, FG_MQTT_TOPIC_HUMIDITY);
+    publish_measurement(p_next_transaction, p_measurement_result->pressure, FG_MQTT_TOPIC_PRESSURE);
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(co2_measurement_result_handler);
 }
@@ -179,7 +171,11 @@ FG_ACTOR_RESULT_HANDLER(co2_measurement_result_handler)
     ASSERT(p_completed_action->p_actor == m_p_lp8_actor)
     ASSERT(p_completed_action->message.code == FG_LP8_MEASURE)
 
-    check_publish_action(p_completed_action->p_next_concurrent_action);
+    fg_actor_action_t *publish_action = p_completed_action->p_next_concurrent_action;
+    while(publish_action) {
+        check_publish_action(publish_action);
+        publish_action = publish_action->p_next_concurrent_action;
+    }
 
     FG_ACTOR_GET_P_RESULT(fg_lp8_measurement_t, p_measurement_result, p_completed_action);
     NRF_LOG_INFO("Measurement: filtered %u (raw %u) PPM CO2, %d C.\n",
