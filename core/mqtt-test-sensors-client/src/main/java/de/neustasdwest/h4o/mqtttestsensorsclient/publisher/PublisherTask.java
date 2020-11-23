@@ -1,13 +1,12 @@
 package de.neustasdwest.h4o.mqtttestsensorsclient.publisher;
 
-import static de.neustasdwest.h4o.mqtttestsensorsclient.publisher.PublishHelperUtils.getFakeCO2Measurement;
-import static de.neustasdwest.h4o.mqtttestsensorsclient.publisher.PublishHelperUtils.getFakeTempMeasurement;
+import static de.neustasdwest.h4o.mqtttestsensorsclient.publisher.PublishUtils.getFakeTempMeasurement;
+import static de.neustasdwest.h4o.mqtttestsensorsclient.publisher.PublishUtils.getRandomMeasurement;
 
 import java.util.Set;
 
 import com.hivemq.client.mqtt.datatypes.MqttQos;
 
-import de.neustasdwest.h4o.mqtttestsensorsclient.client.H4OMqttPublisherClient;
 import de.neustasdwest.h4o.mqtttestsensorsclient.client.H4OMqttPublisherClientImpl;
 import lombok.extern.log4j.Log4j2;
 
@@ -24,7 +23,7 @@ public class PublisherTask implements Runnable {
         if (H4OMqttPublisherClientImpl.getInstance().getState().isConnected()) {
             if (!this.topicNames.isEmpty()) {
                 this.topicNames.forEach(topic -> {
-                    int measurement = topic.equals("TEMP") ? getFakeTempMeasurement() : getFakeCO2Measurement();
+                    int measurement = topic.equals("TEMP") ? getFakeTempMeasurement() : getRandomMeasurement();
                     H4OMqttPublisherClientImpl.getInstance().publishWith().topic(topic)
                             .payload(String.valueOf(measurement).getBytes()).qos(MqttQos.EXACTLY_ONCE).send()
                             .whenComplete((mqtt3Publish, throwable) -> {

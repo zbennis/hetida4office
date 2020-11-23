@@ -24,8 +24,8 @@ public class H4OSingletonMqttClient {
             final String uuid = UUID.randomUUID().toString();
             client = Mqtt5Client.builder()
                     .identifier(uuid)
-                    .serverHost(mqttBrokerHost)
-                    .serverPort(mqttBrokerPort)
+                    .serverHost(this.mqttBrokerHost)
+                    .serverPort(this.mqttBrokerPort)
                     .automaticReconnect()
                         .initialDelay(500, TimeUnit.MILLISECONDS)
                         .maxDelay(1, TimeUnit.MINUTES)
@@ -33,7 +33,7 @@ public class H4OSingletonMqttClient {
                     .buildAsync();
         }
     }
-    public Mqtt5AsyncClient getInstance() {
+    public static Mqtt5AsyncClient getInstance() {
         return client;
     }
 
