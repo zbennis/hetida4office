@@ -45,12 +45,13 @@ extern "C" {
 #endif
 
 #include "nrf_gpio.h"
+#include "pins.h"
 
 // LEDs definitions for Adafruit ItsyBitsy nRF52840 Express
 #define LEDS_NUMBER    2
 
-#define LED_1          NRF_GPIO_PIN_MAP(0,6)
-#define LED_2          NRF_GPIO_PIN_MAP(0,4)
+#define LED_1          PIN_LED1
+#define LED_2          PIN_LED2
 #define LED_START      LED_1
 #define LED_STOP       LED_2
 
@@ -60,12 +61,12 @@ extern "C" {
 
 #define LEDS_INV_MASK  LEDS_MASK
 
-#define BSP_LED_0      6
-#define BSP_LED_1      4
+#define BSP_LED_0      LED_1
+#define BSP_LED_1      LED_2
 
 #define BUTTONS_NUMBER 1
 
-#define BUTTON_1       29
+#define BUTTON_1       PIN_SWITCH
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
 
 #define BUTTONS_ACTIVE_STATE 0
@@ -74,8 +75,8 @@ extern "C" {
 
 #define BSP_BUTTON_0   BUTTON_1
 
-#define RX_PIN_NUMBER  25
-#define TX_PIN_NUMBER  24
+#define RX_PIN_NUMBER  PIN_RX_D0
+#define TX_PIN_NUMBER  PIN_TX_D1
 #define HWFC           false
 
 #ifdef __cplusplus

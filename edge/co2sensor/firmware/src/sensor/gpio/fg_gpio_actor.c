@@ -76,7 +76,8 @@ static void fg_gpio_listen(FG_ACTOR_MESSAGE_HANDLER_ARGS_DEC, bool up)
     {
         ASSERT(m_num_listening == 0);
         FG_ACTOR_STATE_TRANSITION(GPIO_OFF, GPIO_LISTENING, "enabling and adding listener");
-        DRVX(nrfx_gpiote_init());
+        if (!nrfx_gpiote_is_init())
+            DRVX(nrfx_gpiote_init());
     }
     else
     {
@@ -134,7 +135,6 @@ static void fg_gpio_shutdown(const fg_actor_action_t * const p_calling_action)
     if (m_num_listening == 0)
     {
         FG_ACTOR_STATE_TRANSITION(GPIO_LISTENING, GPIO_OFF, "removed listener and disabled");
-        nrfx_gpiote_uninit();
     }
     else
     {

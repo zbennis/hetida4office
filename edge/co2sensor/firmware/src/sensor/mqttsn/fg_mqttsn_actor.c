@@ -1,4 +1,5 @@
 #include "mqttsn/fg_mqttsn_actor.h"
+#include "bsp/fg_bsp_actor.h"
 #include "gpio/fg_gpio.h"
 #include "pins.h"
 #include <app_scheduler.h>
@@ -118,6 +119,7 @@ static void fg_mqttsn_init(void)
 
     APP_SCHED_INIT(SCHED_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 
+    fg_bsp_actor_init();
     LEDS_CONFIGURE(LEDS_MASK);
     bsp_board_leds_off();
     fg_gpio_cfg_out_os_nopull(PIN_MQTTSN_CONNECTION_STATUS);
@@ -168,8 +170,6 @@ FG_ACTOR_SLOT(fg_mqttsn_connect)
     FG_ACTOR_STATE_TRANSITION(MQTTSN_DISCONNECTED, MQTTSN_CONNECTING, "connecting MQTTSN client");
 
     FG_ACTOR_RUN_TASK(FG_MQTTSN_TASK_INSTANCE_NETWORK, fg_mqttsn_connected_cb);
-
-    APP_ERROR_CHECK(bsp_init(BSP_INIT_LEDS, NULL));
 
     fg_mqttsn_thread_init();
     m_p_fg_mqttsn_thread_instance = thread_ot_instance_get();

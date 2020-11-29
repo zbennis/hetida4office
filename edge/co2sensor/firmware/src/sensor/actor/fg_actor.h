@@ -40,8 +40,7 @@ typedef enum
 } fg_actor_action_type_t;
 
 #define FG_ACTOR_TASK_CALLBACK_ARGS_DEC                                                            \
-    fg_actor_transaction_t *const p_next_transaction,                                              \
-        fg_actor_action_t *const p_calling_action,                                           \
+    fg_actor_transaction_t *const p_next_transaction, fg_actor_action_t *p_calling_action,         \
         fg_actor_action_t *const p_completed_action
 #define FG_ACTOR_TASK_CALLBACK_ARGS p_next_transaction, p_calling_action, p_completed_action
 typedef void (*fg_actor_task_callback_t)(FG_ACTOR_TASK_CALLBACK_ARGS_DEC);
@@ -101,9 +100,9 @@ struct fg_actor_transaction
 {
     fg_actor_result_handler_t
         result_handler; // result handler to be executed once the transaction is considered "done"
-    const fg_actor_action_t * p_calling_action; // Action context in which this transaction was
-                                                // created - may be NULL in the case of top-level
-                                                // root transactions.
+    fg_actor_action_t * p_calling_action; // Action context in which this transaction was
+                                          // created - may be NULL in the case of top-level
+                                          // root transactions.
     fg_actor_action_t *
         p_first_concurrent_action; // pointer to the first task or message in this transaction
     uint32_t error_flags; // error mask representing errors occurred while processing any of the

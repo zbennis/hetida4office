@@ -3,6 +3,8 @@
 
 #include "actor/fg_actor.h"
 
+uint8_t fg_lp8_get_idle_time();
+
 typedef enum { FG_LP8_MEASURE } fg_lp8_actor_message_code_t;
 
 FG_ACTOR_INTERFACE_DEC(lp8, fg_lp8_actor_message_code_t);

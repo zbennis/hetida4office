@@ -201,6 +201,10 @@
     <file file_name="sdk_config.h" />
     <file file_name="utils.h" />
     <file file_name="custom_board.h" />
+    <folder Name="bsp">
+      <file file_name="bsp/fg_bsp_actor.h" />
+      <file file_name="bsp/fg_bsp_actor.c" />
+    </folder>
   </project>
   <configuration
     Name="Release"

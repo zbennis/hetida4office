@@ -1,4 +1,5 @@
 #include "lp8/fg_lp8_actor.h"
+#include "bsp/fg_bsp_actor.h"
 #include "gpio/fg_gpio.h"
 #include "gpio/fg_gpio_actor.h"
 #include "lpcomp/fg_lpcomp_actor.h"
@@ -42,22 +43,36 @@ FG_ACTOR_RESULT_HANDLERS_DEC(fg_lp8_hard_reset, fg_lp8_hard_reset_done);
 
 FG_ACTOR_INTERFACE_LOCAL_DEC();
 
-static bool m_uart_enabled;
-
 
 /** LP8 resources */
+// Time between LP8 measurements
+#define FG_LP8_IDLE_TIME_S 60 // time (in s) between LP8 measurements
+#define FG_LP8_IDLE_TIME_BACKGROUND_CALIBRATION_S 5 // time (in s) between LP8 measurements while calibrating
+
 // Delay between switchin LP8 power on and end of rising
 // time, in ms.
 #define LP8_PWR_ON_DELAY 2
 // Time between the lcomp signal (15/16th of VDD) and the
 // start of the measurement, in ms.
-#define LP8_VCAP_SATURATION_TIME 500
+#define LP8_VCAP_SATURATION_TIME_MS 500
 
-// Number of measurements between ABC calibration.
-#define LP8_CALIBRATION_CYCLES                                                                     \
-    40000 // i.e. desired calibration cycle in s divided by
-          // (idle time in s + VCAP saturation time in s + 0.5s) - normally >= 8 days
-static uint32_t m_lp8_remaining_calibration_cycles;
+// Time between automatic calibrations in hours.
+#define LP8_TIME_BETWEEN_CALIBRATIONS_H 1 // recommended is about 8 days between ABC calibrations
+
+// Number of measurement cycles between ABC calibrations:
+// Divide the desired calibration cycle in s by the number of seconds per measurement
+// cycle to yield the number of measurement cycles between automatic calibrations, i.e.
+// (time between calibrations in h * 60 * 60) / (idle time in s + VCAP saturation time in s + 0.5s).
+#define LP8_MEAS_CYCLES_BETWEEN_CALIBRATIONS                                                       \
+    ROUNDED_DIV(LP8_TIME_BETWEEN_CALIBRATIONS_H * 60 * 60,                                         \
+        FG_LP8_IDLE_TIME_S + CEIL_DIV(LP8_VCAP_SATURATION_TIME_MS + 500, 1000))
+
+static uint32_t m_lp8_remaining_abc_calibration_cycles;
+
+// Background calibration requires 40 cycles to ensure that filter state will
+// be completely reset while calibrating.
+#define LP8_BACKGROUND_CALIBRATION_CYCLES 40
+static uint32_t m_lp8_remaining_background_calibration_cycles;
 
 #define LP8_CC_INITIAL_MEASUREMENT 0x10
 #define LP8_CC_SEQUENTIAL_MEASUREMENT 0x20
@@ -221,7 +236,21 @@ STATIC_ASSERT(sizeof(fg_lp8_modbus_pdu_t) == LP8_MAX_PDU_SIZE, "incorrect LP8 PD
 #define LP8_MODBUS_ADU_PDU_OFFSET LP8_MODBUS_ADU_ADDRESS_SIZE
 
 
+/** BSP child actor resources */
+void fg_lp8_calibration_requested()
+{
+    m_lp8_remaining_background_calibration_cycles = LP8_BACKGROUND_CALIBRATION_CYCLES;
+}
+static const fg_bsp_assign_button_message_t m_fg_lp8_button_message = {.button_no = BSP_BOARD_BUTTON_0,
+    .button_action = BSP_BUTTON_ACTION_LONG_PUSH,
+    .button_event_handler = fg_lp8_calibration_requested};
+
+static bool m_fg_lp8_is_calibration_button_initialized = false;
+
+
 /** UART child actor resources */
+static bool m_uart_enabled;
+
 #define LP8_UART_TX_BUFFER_SIZE LP8_MODBUS_ADU_SIZE(LP8_MAX_TX_PDU_SIZE)
 #define LP8_UART_RX_BUFFER_SIZE LP8_MODBUS_ADU_SIZE(LP8_MAX_RX_PDU_SIZE)
 
@@ -248,7 +277,7 @@ static const fg_gpio_pin_config_t m_lp8_rdy_pin_config = {
 
 
 /** RTC child actor resources */
-static const uint32_t m_saturation_delay_ms = LP8_VCAP_SATURATION_TIME;
+static const uint32_t m_saturation_delay_ms = LP8_VCAP_SATURATION_TIME_MS;
 
 
 /** Public API */
@@ -258,7 +287,7 @@ FG_ACTOR_INIT_DEF(lp8, LP8_UNINITIALIZED, LP8_OFF, fg_lp8_init);
 /** Implementation */
 void fg_lp8_init()
 {
-    m_lp8_remaining_calibration_cycles = LP8_CALIBRATION_CYCLES;
+    m_lp8_remaining_abc_calibration_cycles = LP8_MEAS_CYCLES_BETWEEN_CALIBRATIONS;
     m_lp8_is_initial_measurement = true;
 
     nrf_gpio_cfg_default(m_lp8_rdy_pin_config.pin);
@@ -269,10 +298,15 @@ void fg_lp8_init()
     fg_gpio_cfg_out_os_nopull(PIN_LP8_EN_MEAS);
 
     // Initialize child actors.
+    fg_bsp_actor_init();
     fg_uart_actor_init();
     fg_lpcomp_actor_init();
     fg_gpio_actor_init();
     fg_rtc_actor_init();
+}
+
+uint8_t fg_lp8_get_idle_time() {
+   return m_lp8_remaining_background_calibration_cycles > 0 ? FG_LP8_IDLE_TIME_BACKGROUND_CALIBRATION_S : FG_LP8_IDLE_TIME_S;
 }
 
 static void fg_send_modbus_adu(
@@ -291,6 +325,13 @@ FG_ACTOR_SLOT(fg_lp8_measure_charge)
     nrf_gpio_pin_clear(PIN_LP8_EN_REV_BLOCK);
     nrf_gpio_pin_set(PIN_LP8_EN_CHARGE);
     FG_ACTOR_POST_MESSAGE(lpcomp, FG_LPCOMP_START);
+
+    if (!m_fg_lp8_is_calibration_button_initialized)
+    {
+        m_fg_lp8_is_calibration_button_initialized = true;
+        fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(bsp, FG_BSP_ASSIGN_BUTTON);
+        FG_ACTOR_SET_ARGS(p_next_action, m_fg_lp8_button_message);
+    }
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(fg_lp8_measure_saturate);
 }
@@ -362,16 +403,33 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_measure_cmd)
         p_ram->calculation_control = LP8_CC_INITIAL_MEASUREMENT;
         m_lp8_is_initial_measurement = false;
     }
-    else if (m_lp8_remaining_calibration_cycles == 0)
+    else if (m_lp8_remaining_background_calibration_cycles > 0)
+    {
+        if (m_lp8_remaining_background_calibration_cycles > 1)
+        {
+            // Measure normally while the sensor is exposed to fresh air.
+            NRF_LOG_INFO("another %d fresh air measurements", m_lp8_remaining_background_calibration_cycles);
+            m_lp8_remaining_background_calibration_cycles--;
+            p_ram->calculation_control = LP8_CC_SEQUENTIAL_MEASUREMENT;
+        }
+        else if (m_lp8_remaining_background_calibration_cycles == 1)
+        {
+            NRF_LOG_INFO("execute background calibration");
+            m_lp8_remaining_background_calibration_cycles = 0;
+            p_ram->calculation_control = LP8_CC_BACKGROUND_CALIBRATION_FILTERED;
+        }
+    }
+    else if (m_lp8_remaining_abc_calibration_cycles == 0)
     {
         NRF_LOG_INFO("re-calibrating");
         p_ram->calculation_control = LP8_CC_ABC;
-        m_lp8_remaining_calibration_cycles = LP8_CALIBRATION_CYCLES;
+        m_lp8_remaining_abc_calibration_cycles = LP8_MEAS_CYCLES_BETWEEN_CALIBRATIONS;
     }
     else
     {
         p_ram->calculation_control = LP8_CC_SEQUENTIAL_MEASUREMENT;
-        m_lp8_remaining_calibration_cycles--;
+        if (m_lp8_remaining_abc_calibration_cycles > 0)
+            m_lp8_remaining_abc_calibration_cycles--;
     }
 
     // Copy prior sensor state back to sensor.

@@ -11,8 +11,6 @@
 #include <thread_utils.h>
 #include <nrfx_qspi.h>
 
-// Time between measurements
-#define MAIN_IDLE_TIME_MS (16000) // min 16s (min time between LP8 measurements), currently 16s
 
 FG_ACTOR_RESULT_HANDLERS_DEC(init_or_wakeup_result_handler, pressure_measurement_result_handler,
     co2_measurement_result_handler);
@@ -25,7 +23,7 @@ static const fg_actor_t * m_p_lp8_actor;
 
 /** RTC child actor resources */
 static const fg_actor_t * m_p_rtc_actor;
-static const uint32_t m_main_idle_time = MAIN_IDLE_TIME_MS;
+static uint32_t m_main_idle_time_ms;
 
 /** MQTTSN child actor resources */
 static const fg_actor_t * m_p_mqttsn_actor;
@@ -211,7 +209,8 @@ FG_ACTOR_RESULT_HANDLER(co2_measurement_result_handler)
         p_measurement_result->temperature);
 
     fg_actor_action_t * p_next_action = FG_ACTOR_POST_MESSAGE(rtc, FG_RTC_START_TIMER);
-    FG_ACTOR_SET_ARGS(p_next_action, m_main_idle_time);
+    m_main_idle_time_ms = fg_lp8_get_idle_time() * 1000;
+    FG_ACTOR_SET_ARGS(p_next_action, m_main_idle_time_ms);
 
     publish_measurement(
         p_next_transaction, p_measurement_result->conc_filtered_pc, FG_MQTT_TOPIC_CO2);

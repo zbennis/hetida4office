@@ -27,7 +27,7 @@ static void fg_actor_action_free(fg_actor_action_t *);
 NRF_BALLOC_DEF(m_fg_actor_transaction_pool, sizeof(fg_actor_transaction_t), MAX_TRANSACTIONS);
 
 static fg_actor_transaction_t * const fg_actor_transaction_alloc_clear(
-    const fg_actor_action_t * const p_calling_action);
+    fg_actor_action_t * p_calling_action);
 static void fg_actor_transaction_free(fg_actor_transaction_t *);
 
 NRF_QUEUE_DEF(fg_actor_transaction_t *, m_fg_actor_transaction_queue, MAX_TRANSACTIONS,
@@ -155,9 +155,9 @@ static bool handle_finished_actions(void)
     bool did_work = false;
 
     fg_actor_transaction_t * p_transaction;
-    const fg_actor_action_t * p_calling_action;
     fg_actor_action_t * p_sub_action;
     fg_actor_task_callback_t task_callback;
+    fg_actor_action_t * p_calling_action;
     while (!nrf_queue_is_empty(&m_fg_actor_finished_action_queue))
     {
         APP_ERROR_CHECK(nrf_queue_pop(&m_fg_actor_finished_action_queue, &p_sub_action));
@@ -197,8 +197,10 @@ static bool handle_finished_actions(void)
 }
 
 static void fg_actor_post_message(fg_actor_action_t * const p_action);
-static bool fg_actor_post_message_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
-static bool fg_actor_queue_task_if_irq_has_fired_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
+static bool fg_actor_post_message_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
+static bool fg_actor_queue_task_if_irq_has_fired_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
 
 static void fg_actor_run_transaction(fg_actor_transaction_t * const p_transaction)
 {
@@ -215,7 +217,8 @@ static void fg_actor_run_transaction(fg_actor_transaction_t * const p_transactio
     CRITICAL_REGION_EXIT();
 }
 
-static bool fg_actor_post_message_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
+static bool fg_actor_post_message_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
 {
     // Tasks need not to be scheduled as they are started by
     // the actor itself.
@@ -226,7 +229,8 @@ static bool fg_actor_post_message_iteratee(fg_actor_action_t * const p_action, f
     return true;
 }
 
-static bool fg_actor_queue_task_if_irq_has_fired_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
+static bool fg_actor_queue_task_if_irq_has_fired_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
 {
     // A task may finish (via interrupt) before its corresponding
     // transaction is scheduled and handled. In this case we do not
@@ -324,8 +328,10 @@ void fg_actor_task_finished_internal(
     p_task->task.irq_has_fired = true;
 }
 
-static bool fg_actor_transaction_is_done_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
-static bool fg_actor_transaction_consolidate_errors_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
+static bool fg_actor_transaction_is_done_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
+static bool fg_actor_transaction_consolidate_errors_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
 static void fg_actor_transaction_free_deep(fg_actor_transaction_t * const p_transaction);
 
 static bool fg_actor_transaction_check_and_handle_done(fg_actor_transaction_t * const p_transaction)
@@ -334,14 +340,15 @@ static bool fg_actor_transaction_check_and_handle_done(fg_actor_transaction_t * 
     ASSERT(p_transaction->p_first_concurrent_action)
     ASSERT(p_transaction->has_run)
 
-    bool transaction_is_done = fg_actor_iterate_transaction(
-        p_transaction, fg_actor_transaction_is_done_iteratee);
+    bool transaction_is_done =
+        fg_actor_iterate_transaction(p_transaction, fg_actor_transaction_is_done_iteratee);
     if (transaction_is_done)
     {
         p_transaction->error_flags = 0;
-        fg_actor_iterate_transaction(p_transaction, fg_actor_transaction_consolidate_errors_iteratee);
+        fg_actor_iterate_transaction(
+            p_transaction, fg_actor_transaction_consolidate_errors_iteratee);
 
-        const fg_actor_action_t * const p_calling_action = p_transaction->p_calling_action;
+        fg_actor_action_t * p_calling_action = p_transaction->p_calling_action;
         if (p_transaction->result_handler)
         {
             fg_actor_transaction_t * const p_next_transaction =
@@ -361,18 +368,21 @@ static bool fg_actor_transaction_check_and_handle_done(fg_actor_transaction_t * 
     }
 }
 
-static bool fg_actor_transaction_is_done_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
+static bool fg_actor_transaction_is_done_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
 {
     return p_action->is_done;
 }
 
-static bool fg_actor_transaction_consolidate_errors_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
+static bool fg_actor_transaction_consolidate_errors_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
 {
     p_transaction->error_flags |= p_action->error_flags;
     return true;
 }
 
-static bool fg_actor_transaction_free_deep_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
+static bool fg_actor_transaction_free_deep_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction);
 
 static void fg_actor_transaction_free_deep(fg_actor_transaction_t * const p_transaction)
 {
@@ -385,7 +395,8 @@ static void fg_actor_transaction_free_deep(fg_actor_transaction_t * const p_tran
     fg_actor_transaction_free(p_transaction);
 }
 
-static bool fg_actor_transaction_free_deep_iteratee(fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
+static bool fg_actor_transaction_free_deep_iteratee(
+    fg_actor_action_t * const p_action, fg_actor_transaction_t * const p_transaction)
 {
     ASSERT(p_action->is_done)
     fg_actor_action_free(p_action);
@@ -396,7 +407,7 @@ NRF_BALLOC_INTERFACE_LOCAL_DEF(
     fg_actor_transaction_t, fg_actor_transaction, &m_fg_actor_transaction_pool)
 
 static fg_actor_transaction_t * const fg_actor_transaction_alloc_clear(
-    const fg_actor_action_t * const p_calling_action)
+    fg_actor_action_t * p_calling_action)
 {
     fg_actor_transaction_t * const p_transaction = fg_actor_transaction_alloc();
     ASSERT(p_transaction)
