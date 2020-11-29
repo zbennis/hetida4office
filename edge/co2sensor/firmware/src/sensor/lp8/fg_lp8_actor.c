@@ -5,10 +5,10 @@
 #include "pins.h"
 #include "rtc/fg_rtc_actor.h"
 #include "uart/fg_uart_actor.h"
+#include <nrf_delay.h>
 #include <nrfx.h>
 #include <stddef.h>
 #include <string.h>
-#include <nrf_delay.h>
 
 /** Logging */
 #define NRFX_FG_LP8_ACTOR_CONFIG_LOG_ENABLED 1
@@ -522,7 +522,8 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_hard_reset_done)
     FG_ACTOR_STATE_TRANSITION(LP8_RECOVERING, LP8_OFF, "recovered");
 }
 
-static void fg_lp8_shutdown() {
+static void fg_lp8_shutdown()
+{
     nrf_gpio_pin_clear(PIN_LP8_EN_MEAS);
     nrf_gpio_pin_clear(PIN_LP8_EN_CHARGE);
     nrf_gpio_pin_set(PIN_LP8_EN_REV_BLOCK);

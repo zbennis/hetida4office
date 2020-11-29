@@ -9,6 +9,7 @@
 #include <nrf_log_default_backends.h>
 #include <stdlib.h>
 #include <thread_utils.h>
+#include <nrfx_qspi.h>
 
 // Time between measurements
 #define MAIN_IDLE_TIME_MS (16000) // min 16s (min time between LP8 measurements), currently 16s
@@ -29,6 +30,11 @@ static const uint32_t m_main_idle_time = MAIN_IDLE_TIME_MS;
 /** MQTTSN child actor resources */
 static const fg_actor_t * m_p_mqttsn_actor;
 static char m_mqttsn_message_buffer[FG_MQTT_TOPIC_NUM][20];
+
+/** QSPI resources */
+// TODO: Check whether QSPI is correctly being addressed.
+static void qspi_handler(nrfx_qspi_evt_t event, void *p_context);
+#define FG_QSPI_DEEP_SLEEP_OPCODE 0xB9
 
 static fg_mqttsn_message_t m_mqttsn_message[FG_MQTT_TOPIC_NUM] = {
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_PRESSURE]},
@@ -59,6 +65,12 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
     NRF_LOG_INFO("FG sensor app started.");
 
+    // Put QSPI device into deep power down mode.
+    const nrfx_qspi_config_t fg_qspi_config = NRFX_QSPI_DEFAULT_CONFIG;
+    nrfx_qspi_init(&fg_qspi_config, qspi_handler, NULL);
+    nrfx_qspi_cinstr_quick_send(FG_QSPI_DEEP_SLEEP_OPCODE, NRF_QSPI_CINSTR_LEN_1B, NULL);
+    nrfx_qspi_uninit();
+
     fg_actor_init();
 
     m_p_rtc_actor = fg_rtc_actor_init(); // Starts the RTC clock - so must be called before
@@ -85,6 +97,11 @@ int main(void)
     }
 }
 
+static void qspi_handler(nrfx_qspi_evt_t event, void *p_context) {
+  if (event != NRFX_QSPI_EVENT_DONE) {
+    NRF_LOG_ERROR("QSPI could not be put into sleep mode")
+  }
+}
 
 static void check_publish_action(const fg_actor_action_t * const p_completed_action)
 {

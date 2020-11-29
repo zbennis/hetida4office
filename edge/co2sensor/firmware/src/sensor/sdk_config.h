@@ -2191,7 +2191,7 @@
 // <e> NRFX_QSPI_ENABLED - nrfx_qspi - QSPI peripheral driver
 //==========================================================
 #ifndef NRFX_QSPI_ENABLED
-#define NRFX_QSPI_ENABLED 0
+#define NRFX_QSPI_ENABLED 1
 #endif
 // <o> NRFX_QSPI_CONFIG_SCK_DELAY - tSHSL, tWHSL and tSHWL in number of 16 MHz periods (62.5 ns).  <0-255>
 
@@ -2271,32 +2271,32 @@
 
 // <s> NRFX_QSPI_PIN_SCK - SCK pin value.
 #ifndef NRFX_QSPI_PIN_SCK
-#define NRFX_QSPI_PIN_SCK NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_SCK 19
 #endif
 
 // <s> NRFX_QSPI_PIN_CSN - CSN pin value.
 #ifndef NRFX_QSPI_PIN_CSN
-#define NRFX_QSPI_PIN_CSN NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_CSN 23
 #endif
 
 // <s> NRFX_QSPI_PIN_IO0 - IO0 pin value.
 #ifndef NRFX_QSPI_PIN_IO0
-#define NRFX_QSPI_PIN_IO0 NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_IO0 21
 #endif
 
 // <s> NRFX_QSPI_PIN_IO1 - IO1 pin value.
 #ifndef NRFX_QSPI_PIN_IO1
-#define NRFX_QSPI_PIN_IO1 NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_IO1 22
 #endif
 
 // <s> NRFX_QSPI_PIN_IO2 - IO2 pin value.
 #ifndef NRFX_QSPI_PIN_IO2
-#define NRFX_QSPI_PIN_IO2 NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_IO2 32
 #endif
 
 // <s> NRFX_QSPI_PIN_IO3 - IO3 pin value.
 #ifndef NRFX_QSPI_PIN_IO3
-#define NRFX_QSPI_PIN_IO3 NRF_QSPI_PIN_NOT_CONNECTED
+#define NRFX_QSPI_PIN_IO3 17
 #endif
 
 // <o> NRFX_QSPI_CONFIG_IRQ_PRIORITY  - Interrupt priority

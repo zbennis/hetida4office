@@ -140,6 +140,7 @@
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_lpcomp.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_nvmc.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_power.c" />
+        <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_qspi.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_rtc.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_systick.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_twim.c" />
