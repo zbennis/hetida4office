@@ -57,7 +57,7 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
 #define LP8_VCAP_SATURATION_TIME_MS 500
 
 // Time between automatic calibrations in hours.
-#define LP8_TIME_BETWEEN_CALIBRATIONS_H 1 // recommended is about 8 days between ABC calibrations
+#define LP8_TIME_BETWEEN_CALIBRATIONS_H (8*24) // recommended is about 8 days between ABC calibrations
 
 // Number of measurement cycles between ABC calibrations:
 // Divide the desired calibration cycle in s by the number of seconds per measurement
@@ -273,7 +273,7 @@ __STATIC_INLINE void fg_lp8_uart_reset_buffers(void)
 
 /** GPIO child actor resources */
 static const fg_gpio_pin_config_t m_lp8_rdy_pin_config = {
-    .pin = PIN_LP8_MEAS_RDY, .pull = NRF_GPIO_PIN_NOPULL};
+    .pin = PIN_LP8_MEAS_RDY, .pull = NRF_GPIO_PIN_PULLUP};
 
 
 /** RTC child actor resources */
@@ -421,12 +421,13 @@ FG_ACTOR_RESULT_HANDLER(fg_lp8_measure_cmd)
     }
     else if (m_lp8_remaining_abc_calibration_cycles == 0)
     {
-        NRF_LOG_INFO("re-calibrating");
+        NRF_LOG_INFO("execute ABC calibration");
         p_ram->calculation_control = LP8_CC_ABC;
         m_lp8_remaining_abc_calibration_cycles = LP8_MEAS_CYCLES_BETWEEN_CALIBRATIONS;
     }
     else
     {
+        NRF_LOG_DEBUG("another %d measurements before ABC calibration", m_lp8_remaining_abc_calibration_cycles);
         p_ram->calculation_control = LP8_CC_SEQUENTIAL_MEASUREMENT;
         if (m_lp8_remaining_abc_calibration_cycles > 0)
             m_lp8_remaining_abc_calibration_cycles--;

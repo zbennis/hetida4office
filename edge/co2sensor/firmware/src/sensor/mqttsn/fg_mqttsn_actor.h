@@ -8,6 +8,7 @@ typedef enum
     FG_MQTTSN_CONNECT,
     FG_MQTTSN_DISCONNECT,
     FG_MQTTSN_PUBLISH,
+    FG_MQTTSN_SLEEP
 } fg_mqttsn_actor_message_code_t;
 
 typedef enum
