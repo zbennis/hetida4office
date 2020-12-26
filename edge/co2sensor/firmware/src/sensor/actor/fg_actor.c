@@ -294,9 +294,9 @@ static void fg_actor_queue_or_free_transaction(const fg_actor_action_t * const p
 // Obs: No need for a critical region here as each task corresponds
 // exclusively to one IRQ handler, i.e. one IRQ priority, and therefore
 // cannot be interrupted again for the same task.
-// There's also no need to synchronize with adtor or transaction state
-// as both will only be updated from main context which always runs at
-// lower or same priority as this function.
+// There's also no need to synchronize with actor or transaction state
+// as both will only be updated from the main context which always runs
+// at lower or same priority as this function.
 void fg_actor_task_finished_internal(
     const fg_actor_t * const p_actor, const uint32_t task_instance_id)
 {
