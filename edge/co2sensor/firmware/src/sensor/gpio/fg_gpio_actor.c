@@ -4,6 +4,10 @@
 #include <app_util_platform.h>
 
 /** Logging */
+#define NRFX_FG_GPIO_ACTOR_CONFIG_LOG_ENABLED 0
+#define NRFX_FG_GPIO_ACTOR_CONFIG_LOG_LEVEL 4
+#define NRFX_FG_GPIO_ACTOR_CONFIG_INFO_COLOR 6
+#define NRFX_FG_GPIO_ACTOR_CONFIG_DEBUG_COLOR 6
 #define NRFX_LOG_MODULE FG_GPIO_ACTOR
 #include <nrfx_log.h>
 
@@ -108,6 +112,15 @@ static void fg_gpio_listen(FG_ACTOR_MESSAGE_HANDLER_ARGS_DEC, bool up)
     FG_ACTOR_RUN_TASK(task_id, fg_gpio_triggered_evt_cb);
 
     nrfx_gpiote_in_event_enable(p_pin_config->pin, true);
+
+    if (nrfx_gpiote_in_is_set(p_pin_config->pin) == up ? true : false) {
+      // Trigger immediately in case the pin already has the target state.
+      // Do so after enabling the event to make sure that we don't miss
+      // the event if it happens while we're setting things up.
+      CRITICAL_REGION_ENTER();
+      if (fg_actor_is_task_running(task_id)) fg_actor_task_finished(task_id);
+      CRITICAL_REGION_EXIT();
+    }
 }
 
 static void fg_gpio_shutdown(const fg_actor_action_t * const p_calling_action);
