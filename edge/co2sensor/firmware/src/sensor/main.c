@@ -9,7 +9,10 @@
 #include <nrf_log_default_backends.h>
 #include <stdlib.h>
 #include <thread_utils.h>
-#include <nrfx_qspi.h>
+
+// TODO: Remove when bat measurement is moved to its own actor.
+#include "gpio/fg_gpio.h"
+#include "pins.h"
 
 
 FG_ACTOR_RESULT_HANDLERS_DEC(init_or_wakeup_result_handler, pressure_measurement_result_handler,
@@ -29,11 +32,6 @@ static uint32_t m_main_idle_time_ms;
 static const fg_actor_t * m_p_mqttsn_actor;
 static char m_mqttsn_message_buffer[FG_MQTT_TOPIC_NUM][20];
 
-/** QSPI resources */
-// TODO: Check whether QSPI is correctly being addressed.
-static void qspi_handler(nrfx_qspi_evt_t event, void *p_context);
-#define FG_QSPI_DEEP_SLEEP_OPCODE 0xB9
-
 static fg_mqttsn_message_t m_mqttsn_message[FG_MQTT_TOPIC_NUM] = {
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_PRESSURE]},
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_TEMPERATURE]},
@@ -45,15 +43,13 @@ static fg_mqttsn_message_t m_mqttsn_message[FG_MQTT_TOPIC_NUM] = {
 
 /** Main loop */
 
+// TODO: measure battery voltage every few cycles and send it as an event
 // TODO: connect gpio pin to sleep state and check whether the device is sleeping as intended.
 // TODO: Make sure EN_BLK_REVERSE is Hi-Z during reset to make sure that VCAP will not
-//       (reverse) aliment 3V3.
+//       (reverse) aliment 3V3. Hide VCAP behind MOSFET.
 // TODO: implement watchdog (capture ASSERTS and show it somehow e.g. via buzzer), stack guard, mpu,
 //       NRFX_PRS
 // TODO: implement a keep-alive LED that shortly flashes whenever a keep-alive packet is sent out
-// TODO: save sensor state in non-volatile memory after re-calibration and
-//       re-load it after reset (verify first if calibration data is not saved on
-//       chip anyway).
 // TODO: install and use DC/DC regulator
 // TODO: implement low-power detection together with a low-power buzzer
 // TODO: use the buzzer also to indicate dangerously high levels of CO2 independently
@@ -63,11 +59,8 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
     NRF_LOG_INFO("FG sensor app started.");
 
-    // Put QSPI device into deep power down mode.
-    const nrfx_qspi_config_t fg_qspi_config = NRFX_QSPI_DEFAULT_CONFIG;
-    nrfx_qspi_init(&fg_qspi_config, qspi_handler, NULL);
-    nrfx_qspi_cinstr_quick_send(FG_QSPI_DEEP_SLEEP_OPCODE, NRF_QSPI_CINSTR_LEN_1B, NULL);
-    nrfx_qspi_uninit();
+    // TODO: implement battery measurement
+    fg_gpio_cfg_out_od_nopull(PIN_BAT_MEAS);
 
     fg_actor_init();
 
@@ -93,12 +86,6 @@ int main(void)
             thread_sleep();
         }
     }
-}
-
-static void qspi_handler(nrfx_qspi_evt_t event, void *p_context) {
-  if (event != NRFX_QSPI_EVENT_DONE) {
-    NRF_LOG_ERROR("QSPI could not be put into sleep mode")
-  }
 }
 
 static void check_publish_action(const fg_actor_action_t * const p_completed_action)
