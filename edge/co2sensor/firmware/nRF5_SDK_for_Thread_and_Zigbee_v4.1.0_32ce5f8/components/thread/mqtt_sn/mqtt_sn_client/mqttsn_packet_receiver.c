@@ -365,13 +365,13 @@ static uint32_t regack_handle(mqttsn_client_t * p_client,
                 return NRF_ERROR_INTERNAL;
             }
 
-            uint32_t fifo_dequeue_rc = mqttsn_packet_fifo_elem_dequeue(p_client, packet_id, MQTTSN_MESSAGE_ID);
-            ASSERT(fifo_dequeue_rc == NRF_SUCCESS);
-
             mqttsn_topic_t topic;
             memset(&topic, 0, sizeof(mqttsn_topic_t));
             topic.topic_id     = topic_id;
             topic.p_topic_name = p_client->packet_queue.packet[index].topic.p_topic_name;
+
+            uint32_t fifo_dequeue_rc = mqttsn_packet_fifo_elem_dequeue(p_client, packet_id, MQTTSN_MESSAGE_ID);
+            ASSERT(fifo_dequeue_rc == NRF_SUCCESS);
 
             mqttsn_event_t evt_acc;
             memset(&evt_acc, 0, sizeof(mqttsn_event_t));
