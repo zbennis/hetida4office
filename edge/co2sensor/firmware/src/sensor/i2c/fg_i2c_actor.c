@@ -115,16 +115,12 @@ FG_ACTOR_SLOT(fg_i2c_transact)
             p_i2c_transaction->address, p_i2c_transaction->p_rx_data, p_i2c_transaction->rx_size);
     }
 
-    nrfx_err_t result = nrfx_twim_xfer(&m_nrfx_i2c, &xfer_desc, 0);
-    if (result != NRFX_SUCCESS)
-    {
-        FG_ACTOR_ERROR(p_calling_action, result);
-    }
+    DRVX(nrfx_twim_xfer(&m_nrfx_i2c, &xfer_desc, 0));
 }
 
 FG_ACTOR_TASK_CALLBACK(fg_i2c_done_evt_cb)
 {
-    FG_ACTOR_STATE_TRANSITION(I2C_TRANSACTING, I2C_IDLE, "ITC transaction finished");
+    FG_ACTOR_STATE_TRANSITION(I2C_TRANSACTING, I2C_IDLE, "I2C transaction finished");
 
     ASSERT(p_calling_action->result_size == p_completed_action->result_size);
     ASSERT(p_calling_action->p_result == p_completed_action->p_result);

@@ -21,7 +21,6 @@
 
 #define BSP_LED_0      6
 #define BSP_LED_1      4
-#define BSP_LED_2      30
 #define BSP_LED_2      28
 
 #define BUTTONS_NUMBER 1

@@ -28,6 +28,7 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
 
 
 /** LPCOMP resources */
+// TODO: Pass in configuration from the outside comparable to GPIO actor.
 #define AIN_VCAP_LPCOMP PIN_LP8_VCAP_LPCOMP
 #define AIN_VCAP_VOLTAGE NRF_LPCOMP_REF_SUPPLY_15_16
 #define AIN_VCAP_HYST NRF_LPCOMP_HYST_50mV

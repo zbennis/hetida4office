@@ -317,7 +317,7 @@ static void fg_mqttsn_thread_wake_up()
 
 static void fg_mqttsn_update_state(fg_mqttsn_event_t * p_event)
 {
-    static num_failed_puback = 0;
+    static uint8_t num_failed_puback = 0;
 
     switch (p_event->type)
     {
@@ -437,8 +437,9 @@ static void fg_mqttsn_update_state(fg_mqttsn_event_t * p_event)
                                 p_event->mqtt_client_event->event_data.error.error);
                             fg_mqttsn_finish_activity(FG_MQTTSN_ACTIVITY_PUBLISHING);
                             num_failed_puback++;
-                            if (num_failed_puback >= FG_MQTTSN_MAX_FAILED_PUBACK_BEFORE_RECONNECT) {
-                              fg_mqttsn_gateway_state_reset();
+                            if (num_failed_puback >= FG_MQTTSN_MAX_FAILED_PUBACK_BEFORE_RECONNECT)
+                            {
+                                fg_mqttsn_gateway_state_reset();
                             }
                             break;
 
@@ -553,11 +554,12 @@ static ret_code_t fg_mqttsn_progress()
 
         if (!fg_mqttsn_is_gateway_known())
         {
-            if(!fg_mqttsn_is_disconnected()) {
-              err_code = mqttsn_client_disconnect(&m_fg_mqttsn_client);
-              if (err_code == NRFX_SUCCESS)
-                  fg_mqttsn_start_activity(FG_MQTTSN_ACTIVITY_DISCONNECTING);
-              return err_code;
+            if (!fg_mqttsn_is_disconnected())
+            {
+                err_code = mqttsn_client_disconnect(&m_fg_mqttsn_client);
+                if (err_code == NRFX_SUCCESS)
+                    fg_mqttsn_start_activity(FG_MQTTSN_ACTIVITY_DISCONNECTING);
+                return err_code;
             }
 
             err_code =
