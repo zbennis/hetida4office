@@ -22,7 +22,7 @@
 #define PIN_SDA NRF_GPIO_PIN_MAP(0, 13)
 #define PIN_SCL NRF_GPIO_PIN_MAP(0, 4)
 
-#define PIN_MEAS_BAT NRF_GPIO_PIN_MAP(0, 28)
+#define PIN_MEAS_BAT_SAADC NRF_SAADC_INPUT_AIN4
 #define PIN_nEN_MEAS_BAT NRF_GPIO_PIN_MAP(0, 29)
 
 
@@ -45,8 +45,8 @@
 #define PIN_I2C_SCL PIN_SCL
 
 // BAT
-#define PIN_BAT_MEAS PIN_MEAS_BAT // digital out, S0D1, no pull
-#define PIN_BAT_nEN_MEAS PIN_nEN_MEAS_BAT // analog in
+#define PIN_BAT_nEN_MEAS PIN_nEN_MEAS_BAT // digital out, S0D1, no pull
+#define PIN_BAT_MEAS_SAADC PIN_MEAS_BAT_SAADC // analog in
 
 #define NUM_DIGITAL_IN 1 // required to configure resources for GPIOTE event listeners
 

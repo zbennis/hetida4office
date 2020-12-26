@@ -63,6 +63,10 @@ public class H4OMqttTopicToKafkaTimeseriesBridge {
                 h4oMeasurement = BigDecimal.valueOf(measurement / 10000L);
                 break;
 
+            case "bat":
+                h4oMeasurement = BigDecimal.valueOf(measurement / 1000000L);
+                break;
+
             default:
                 h4oMeasurement = BigDecimal.valueOf(measurement);
         }

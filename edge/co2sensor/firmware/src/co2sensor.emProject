@@ -142,6 +142,7 @@
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_nvmc.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_power.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_rtc.c" />
+        <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_saadc.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_systick.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_twim.c" />
         <file file_name="../sdk/modules/nrfx/drivers/src/nrfx_uarte.c" />
@@ -195,6 +196,10 @@
     <folder Name="mqttsn">
       <file file_name="mqttsn/fg_mqttsn_actor.c" />
       <file file_name="mqttsn/fg_mqttsn_actor.h" />
+    </folder>
+    <folder Name="saadc">
+      <file file_name="saadc/fg_saadc_actor.c" />
+      <file file_name="saadc/fg_saadc_actor.h" />
     </folder>
     <file file_name="main.c" />
     <file file_name="sdk_config.h" />

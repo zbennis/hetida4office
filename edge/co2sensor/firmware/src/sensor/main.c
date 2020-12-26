@@ -2,6 +2,7 @@
 #include "lp8/fg_lp8_actor.h"
 #include "mqttsn/fg_mqttsn_actor.h"
 #include "rtc/fg_rtc_actor.h"
+#include "saadc/fg_saadc_actor.h"
 #include <app_scheduler.h>
 #include <nrf_assert.h>
 #include <nrf_log.h>
@@ -28,39 +29,41 @@ static const fg_actor_t * m_p_lp8_actor;
 static const fg_actor_t * m_p_rtc_actor;
 static uint32_t m_main_idle_time_ms;
 
+/** SAADC child actor resources */
+static const fg_actor_t * m_p_saadc_actor;
+#define FG_SAADC_MEASUREMENT_CYCLES 1;
+static uint8_t m_main_saadc_remaining_measurements = FG_SAADC_MEASUREMENT_CYCLES;
+
 /** MQTTSN child actor resources */
 static const fg_actor_t * m_p_mqttsn_actor;
-static char m_mqttsn_message_buffer[FG_MQTT_TOPIC_NUM][20];
+#define FG_MQTT_MESSAGE_MAX_LEN 20
+static char m_mqttsn_message_buffer[FG_MQTT_TOPIC_NUM][FG_MQTT_MESSAGE_MAX_LEN];
 
 static fg_mqttsn_message_t m_mqttsn_message[FG_MQTT_TOPIC_NUM] = {
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_PRESSURE]},
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_TEMPERATURE]},
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_HUMIDITY]},
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_CO2]},
+  {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_BAT]},
   {.p_data = m_mqttsn_message_buffer[FG_MQTT_TOPIC_STATUS]},
 };
 
 
 /** Main loop */
 
-// TODO: measure battery voltage every few cycles and send it as an event
+// TODO: Let MQTTSN sleep between measurements.
 // TODO: connect gpio pin to sleep state and check whether the device is sleeping as intended.
 // TODO: Make sure EN_BLK_REVERSE is Hi-Z during reset to make sure that VCAP will not
 //       (reverse) aliment 3V3. Hide VCAP behind MOSFET.
+// TODO: Add (optional) timeout to actor framework to discover failed actions.
 // TODO: implement watchdog (capture ASSERTS and show it somehow e.g. via buzzer), stack guard, mpu,
 //       NRFX_PRS
-// TODO: implement a keep-alive LED that shortly flashes whenever a keep-alive packet is sent out
 // TODO: install and use DC/DC regulator
-// TODO: implement low-power detection together with a low-power buzzer
-// TODO: use the buzzer also to indicate dangerously high levels of CO2 independently
 int main(void)
 {
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
     NRF_LOG_INFO("FG sensor app started.");
-
-    // TODO: implement battery measurement
-    fg_gpio_cfg_out_od_nopull(PIN_BAT_MEAS);
 
     fg_actor_init();
 
@@ -69,11 +72,13 @@ int main(void)
     m_p_mqttsn_actor = fg_mqttsn_actor_init();
     m_p_bme280_actor = fg_bme280_actor_init();
     m_p_lp8_actor = fg_lp8_actor_init();
+    m_p_saadc_actor = fg_saadc_actor_init();
 
     fg_actor_transaction_t * const p_init_transaction =
         fg_actor_allocate_root_transaction(init_or_wakeup_result_handler);
     fg_mqttsn_actor_allocate_message(FG_MQTTSN_CONNECT, p_init_transaction);
     fg_bme280_actor_allocate_message(FG_BME280_RESET, p_init_transaction);
+    fg_saadc_actor_allocate_message(FG_SAADC_CALIBRATE, p_init_transaction);
 
     while (true)
     {
@@ -100,6 +105,7 @@ static void check_publish_action(const fg_actor_action_t * const p_completed_act
 FG_ACTOR_RESULT_HANDLER(init_or_wakeup_result_handler)
 {
     static fg_bme280_measurement_t bme280_measurement;
+    static fg_saadc_result_t saadc_bat_measurement;
 
     const fg_actor_action_t * p_completed_action = FG_ACTOR_GET_FIRST_COMPLETED_ACTION();
     if (p_completed_action->p_actor == m_p_mqttsn_actor)
@@ -112,6 +118,12 @@ FG_ACTOR_RESULT_HANDLER(init_or_wakeup_result_handler)
         ASSERT(p_completed_action->p_actor == m_p_bme280_actor)
         ASSERT(p_completed_action->message.code == FG_BME280_RESET)
         CHECK_COMPLETED_ACTION(p_completed_action, "BME280 initialization error!");
+
+        p_completed_action = p_completed_action->p_next_concurrent_action;
+        ASSERT(p_completed_action != NULL);
+        ASSERT(p_completed_action->p_actor == m_p_saadc_actor)
+        ASSERT(p_completed_action->message.code == FG_SAADC_CALIBRATE)
+        CHECK_COMPLETED_ACTION(p_completed_action, "SAADC calibration error!");
     }
     else if (p_completed_action->p_actor == m_p_rtc_actor)
     {
@@ -127,8 +139,16 @@ FG_ACTOR_RESULT_HANDLER(init_or_wakeup_result_handler)
     }
 
     // Start measuring.
-    fg_actor_action_t * const p_next_action = FG_ACTOR_POST_MESSAGE(bme280, FG_BME280_MEASURE);
+    fg_actor_action_t * p_next_action = FG_ACTOR_POST_MESSAGE(bme280, FG_BME280_MEASURE);
     FG_ACTOR_SET_P_RESULT(p_next_action, fg_bme280_measurement_t, &bme280_measurement);
+
+    m_main_saadc_remaining_measurements--;
+    if (m_main_saadc_remaining_measurements == 0) {
+      m_main_saadc_remaining_measurements = FG_SAADC_MEASUREMENT_CYCLES;
+      p_next_action = FG_ACTOR_POST_MESSAGE(saadc, FG_SAADC_MEASURE);
+      FG_ACTOR_SET_P_RESULT(p_next_action, fg_saadc_result_t, &saadc_bat_measurement);
+    }
+
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(pressure_measurement_result_handler);
 }
 
@@ -149,14 +169,14 @@ FG_ACTOR_RESULT_HANDLER(pressure_measurement_result_handler)
     static uint16_t pressure;
     static fg_lp8_measurement_t lp8_measurement;
 
-    const fg_actor_action_t * const p_completed_action = FG_ACTOR_GET_FIRST_COMPLETED_ACTION();
+    const fg_actor_action_t * p_completed_action = FG_ACTOR_GET_FIRST_COMPLETED_ACTION();
     CHECK_COMPLETED_ACTION(p_completed_action, "BME280 measurement error!");
 
     ASSERT(p_completed_action->p_actor == m_p_bme280_actor)
     ASSERT(p_completed_action->message.code == FG_BME280_MEASURE)
 
     FG_ACTOR_GET_P_RESULT(fg_bme280_measurement_t, p_measurement_result, p_completed_action);
-    NRF_LOG_INFO("Measurement: pressure %u, temperature %d, humidity %u\n",
+    NRF_LOG_INFO("Measurement: pressure %u, temperature %d, humidity %u",
         p_measurement_result->pressure, p_measurement_result->temperature,
         p_measurement_result->humidity);
 
@@ -171,6 +191,16 @@ FG_ACTOR_RESULT_HANDLER(pressure_measurement_result_handler)
         p_next_transaction, p_measurement_result->temperature, FG_MQTT_TOPIC_TEMPERATURE);
     publish_measurement(p_next_transaction, p_measurement_result->humidity, FG_MQTT_TOPIC_HUMIDITY);
     publish_measurement(p_next_transaction, p_measurement_result->pressure, FG_MQTT_TOPIC_PRESSURE);
+
+    // Publish battery voltage if measured
+    if (p_completed_action->p_next_concurrent_action != NULL) {
+      p_completed_action = p_completed_action->p_next_concurrent_action;
+      ASSERT(p_completed_action->p_actor == m_p_saadc_actor)
+      ASSERT(p_completed_action->message.code == FG_SAADC_MEASURE)
+      FG_ACTOR_GET_P_RESULT(fg_saadc_result_t, p_saadc_result, p_completed_action);
+      NRF_LOG_INFO("Measurement: battery: %u", *p_saadc_result);
+      publish_measurement(p_next_transaction, *p_saadc_result, FG_MQTT_TOPIC_BAT);
+    }
 
     FG_ACTOR_SET_TRANSACTION_RESULT_HANDLER(co2_measurement_result_handler);
 }
@@ -191,7 +221,7 @@ FG_ACTOR_RESULT_HANDLER(co2_measurement_result_handler)
     }
 
     FG_ACTOR_GET_P_RESULT(fg_lp8_measurement_t, p_measurement_result, p_completed_action);
-    NRF_LOG_INFO("Measurement: filtered %u (raw %u) PPM CO2, %d C.\n",
+    NRF_LOG_INFO("Measurement: filtered %u (raw %u) PPM CO2, %d C.",
         p_measurement_result->conc_filtered_pc, p_measurement_result->conc_pc,
         p_measurement_result->temperature);
 
