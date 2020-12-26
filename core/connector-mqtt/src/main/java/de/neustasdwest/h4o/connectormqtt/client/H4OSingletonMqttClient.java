@@ -17,29 +17,30 @@ public class H4OSingletonMqttClient {
     private final int mqttBrokerPort;
 
     public H4OSingletonMqttClient(@Value("${mqtt.broker.host}") final String mqttBrokerHost,
-    @Value("${mqtt.broker.port}") final int mqttBrokerPort) {
+                                  @Value("${mqtt.broker.port}") final int mqttBrokerPort) {
         this.mqttBrokerHost = mqttBrokerHost;
         this.mqttBrokerPort = mqttBrokerPort;
-        if(client == null) {
+        if (client == null) {
             final String uuid = UUID.randomUUID().toString();
             client = Mqtt5Client.builder()
                     .identifier(uuid)
                     .serverHost(this.mqttBrokerHost)
                     .serverPort(this.mqttBrokerPort)
                     .automaticReconnect()
-                        .initialDelay(500, TimeUnit.MILLISECONDS)
-                        .maxDelay(1, TimeUnit.MINUTES)
-                        .applyAutomaticReconnect()
+                    .initialDelay(500, TimeUnit.MILLISECONDS)
+                    .maxDelay(1, TimeUnit.MINUTES)
+                    .applyAutomaticReconnect()
                     .buildAsync();
         }
     }
+
     public static Mqtt5AsyncClient getInstance() {
         return client;
     }
 
     public void connect() {
-        if(!client.getState().isConnected()) {
-            log.info("Connecting to mqtt client at {}...",mqttBrokerHost);
+        if (!client.getState().isConnected()) {
+            log.info("Connecting to mqtt client at {}...", mqttBrokerHost);
             client.connect();
             return;
         }
@@ -47,11 +48,11 @@ public class H4OSingletonMqttClient {
     }
 
     public void disconnect() {
-        if(client.getState().isConnected()) {
+        if (client.getState().isConnected()) {
             log.info("Disconnecting client...");
             client.disconnect();
             return;
         }
         log.info("Client was already disconnected...");
     }
- }
+}

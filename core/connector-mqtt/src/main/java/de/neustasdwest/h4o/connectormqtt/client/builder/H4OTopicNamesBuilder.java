@@ -16,9 +16,9 @@ public class H4OTopicNamesBuilder implements TopicNamesBuilder {
     private final String[] topicsSuffixes;
     private final String[] devicesNames;
 
-    public H4OTopicNamesBuilder( @Value("${h4o.device.topic.prefix}") final String topicPrefix,
-                                 @Value("${h4o.device.topic.suffixes}")final String[] topicsSuffixes,
-                                 @Value("${h4o.devices.names}") final String[] devicesNames) {
+    public H4OTopicNamesBuilder(@Value("${h4o.device.topic.prefix}") final String topicPrefix,
+                                @Value("${h4o.device.topic.suffixes}") final String[] topicsSuffixes,
+                                @Value("${h4o.devices.names}") final String[] devicesNames) {
         this.topicPrefix = topicPrefix;
         this.topicsSuffixes = topicsSuffixes;
         this.devicesNames = devicesNames;
@@ -26,7 +26,7 @@ public class H4OTopicNamesBuilder implements TopicNamesBuilder {
 
     @Override
     public Set<String> buildTopicNames() {
-        Objects.requireNonNull(topicPrefix,"Topic prefix must not be null");
+        Objects.requireNonNull(topicPrefix, "Topic prefix must not be null");
         Objects.requireNonNull(topicsSuffixes, "Topics suffixes must not be null");
         Objects.requireNonNull(devicesNames, "Devices names must not be null");
         log.info("Generating topic names...");
