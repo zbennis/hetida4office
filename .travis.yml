@@ -1,19 +1,6 @@
-os: linux
-dist: trusty
-
-language: java
-jdk: 
-  - openjdk11
+language: minimal
 
 services:
   - docker
 
-script: cd ./core && mvn clean package
-
-after_success: 
-  - cd .. && .travis/docker-build-and-push.sh
-
-cache:
-  directories:
-  - .autoconf
-  - $HOME/.m2
+script: ./docker-build-and-push.sh
