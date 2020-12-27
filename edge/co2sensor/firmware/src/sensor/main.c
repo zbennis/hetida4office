@@ -31,8 +31,8 @@ static uint32_t m_main_idle_time_ms;
 
 /** SAADC child actor resources */
 static const fg_actor_t * m_p_saadc_actor;
-#define FG_SAADC_MEASUREMENT_CYCLES 1;
-static uint8_t m_main_saadc_remaining_measurements = FG_SAADC_MEASUREMENT_CYCLES;
+#define FG_SAADC_MEASUREMENT_CYCLES 15;
+static uint8_t m_main_saadc_remaining_measurements = 1;
 
 /** MQTTSN child actor resources */
 static const fg_actor_t * m_p_mqttsn_actor;

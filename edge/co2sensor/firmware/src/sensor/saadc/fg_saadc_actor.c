@@ -42,20 +42,22 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
     2 // Sample conversion time [µs] - see tCONV, nRF52840 spec, ch. 6.23.10.1
 #define FG_SAADC_SAMPLE_MARGIN 13 // Time between samples [µs]
 #define FG_SAADC_SAMPLE_FREQUENCY                                                                  \
-    (1000000U / (FG_SAADC_SAMPLE_AQC_TIME + FG_SAADC_SAMPLE_CONV_TIME +                             \
-                   FG_SAADC_SAMPLE_MARGIN)) // [Hz], see nRF52840 spec, ch. 6.23.5
+    (1000000U / (FG_SAADC_SAMPLE_AQC_TIME + FG_SAADC_SAMPLE_CONV_TIME +                            \
+                    FG_SAADC_SAMPLE_MARGIN)) // [Hz], see nRF52840 spec, ch. 6.23.5
 #define FG_SAADC_SAMPLE_CLOCK_FREQUENCY 16000000U // [Hz], see nRF52840 spec, ch. 6.23.9.12
 #define FG_SAADC_SAMPLE_RATE CEIL_DIV(FG_SAADC_SAMPLE_CLOCK_FREQUENCY, FG_SAADC_SAMPLE_FREQUENCY)
 STATIC_ASSERT(FG_SAADC_SAMPLE_RATE >= 80);
 STATIC_ASSERT(FG_SAADC_SAMPLE_RATE <= 2047);
 
 #define FG_SAADC_CONVERSION_BASE_REFERENCE 600000U // ADC internal reference voltage [µV]
-#define FG_SAADC_CONVERSION_REVERSE_GAIN 6U // ADC reverse gain factor, i.e. 1 / NRF_SAADC_GAIN1_6
+#define FG_SAADC_CONVERSION_REVERSE_GAIN 4U // ADC reverse gain factor, i.e. 1 / NRF_SAADC_GAIN1_4
 #define FG_SAADC_CONVERSION_REFERENCE                                                              \
     (FG_SAADC_CONVERSION_BASE_REFERENCE * FG_SAADC_CONVERSION_REVERSE_GAIN)
 #define FG_SAADC_CONVERSION_MAX_VALUE ((1U << (8 + 2 * NRFX_SAADC_CONFIG_RESOLUTION)) - 1)
 #define FG_SAADC_CONVERSION_FACTOR                                                                 \
     ROUNDED_DIV(FG_SAADC_CONVERSION_REFERENCE, FG_SAADC_CONVERSION_MAX_VALUE)
+#define FG_SAADC_VOLTAGE_DIVIDER                                                                   \
+    2 // The relation of the measured voltage to the voltage being applied to the ADC input.
 
 static void saadc_irq_handler(nrfx_saadc_evt_t const * p_event);
 
@@ -90,6 +92,7 @@ FG_ACTOR_SLOT(fg_saadc_measure)
 
     nrf_saadc_channel_config_t channel_config = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(FG_SAADC_PIN);
     channel_config.acq_time = FG_SAADC_SAMPLE_AQC_TIME_CONFIG;
+    channel_config.gain = NRF_SAADC_GAIN1_4;
     DRVX(nrfx_saadc_channel_init(FG_SAADC_CHANNEL, &channel_config));
 
     nrf_gpio_pin_clear(FG_SAADC_PIN_nEN);
@@ -113,7 +116,8 @@ FG_ACTOR_TASK_CALLBACK(fg_saadc_measure_cb)
 
     const nrf_saadc_value_t const * p_measurement = p_completed_action->p_result;
     fg_saadc_result_t * const p_result = p_calling_action->p_result;
-    *p_result = (fg_saadc_result_t)(*p_measurement * FG_SAADC_CONVERSION_FACTOR);
+    *p_result =
+        (fg_saadc_result_t)(*p_measurement * FG_SAADC_CONVERSION_FACTOR * FG_SAADC_VOLTAGE_DIVIDER);
 }
 
 FG_ACTOR_SLOT(fg_saadc_calibrate)

@@ -57,7 +57,7 @@ FG_ACTOR_INTERFACE_LOCAL_DEC();
 #define LP8_VCAP_SATURATION_TIME_MS 500
 
 // Time between automatic calibrations in hours.
-#define LP8_TIME_BETWEEN_CALIBRATIONS_H (8*24) // recommended is about 8 days between ABC calibrations
+#define LP8_TIME_BETWEEN_CALIBRATIONS_H (7*24) // recommended is about 8 days between ABC calibrations
 
 // Number of measurement cycles between ABC calibrations:
 // Divide the desired calibration cycle in s by the number of seconds per measurement
